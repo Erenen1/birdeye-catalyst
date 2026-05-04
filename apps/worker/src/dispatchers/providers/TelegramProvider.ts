@@ -51,18 +51,29 @@ export class TelegramProvider implements INotificationProvider {
   }
 
   private buildMessage(payload: NotificationJobPayload): string {
-    const { token, security, triggeredAt } = payload;
-    return (
-      `🚨 *Birdeye Catalyst Alarm*\n\n` +
-      `*Token:* ${token.name} (${token.symbol})\n` +
+    const { token, security, triggeredAt, userId } = payload;
+    const isPublic = userId === 'PUBLIC';
+
+    let msg = isPublic 
+      ? `📢 *BIRDEYE GLOBAL ALPHA FEED* (Delayed 30s)\n` 
+      : `🚨 *Birdeye Catalyst Alarm*\n`;
+
+    msg += `\n*Token:* ${token.name} (${token.symbol})\n` +
       `*Adres:* \`${token.address}\`\n` +
       `*Güvenlik Skoru:* ${security.securityScore}\n` +
       `*Likidite:* $${token.liquidity.toLocaleString('en-US')}\n` +
       `*24h Hacim:* $${token.volume24h.toLocaleString('en-US')}\n\n` +
-      `🔗 [Birdeye'da İncele](https://birdeye.so/token/${token.address})\n\n` +
-      `--- \n` +
+      `🔗 [Birdeye'da İncele](https://birdeye.so/token/${token.address})\n\n`;
+
+    if (isPublic) {
+      msg += `🚀 *Want this 60s faster?* Upgrade to PRO for 10s polling and real-time alerts.\n` +
+             `👉 [catalyst.syconlab.com/upgrade](https://catalyst.syconlab.com/upgrade)\n\n`;
+    }
+
+    msg += `--- \n` +
       `⚠️ *DISCLAIMER:* This is an automated data signal, NOT financial advice. Always DYOR. _Birdeye Catalyst v2.0_\n` +
-      `_⏱ ${new Date(triggeredAt).toISOString()}_`
-    );
+      `_⏱ ${new Date(triggeredAt).toISOString()}_`;
+
+    return msg;
   }
 }

@@ -19,6 +19,9 @@ export interface IUser {
   telegramChatId?: string;
   telegramVerificationToken?: string;
   telegramUsername?: string;
+  proUntil?: Date; // Pro üyelik bitiş tarihi
+  referralCode?: string; // Kullanıcının kendi referans kodu
+  referredBy?: string; // Kullanıcıyı kimin getirdiği (referans kodu)
   createdAt?: Date;
 }
 

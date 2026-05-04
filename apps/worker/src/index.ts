@@ -17,10 +17,11 @@ import { NotificationDispatcher } from './dispatchers/NotificationDispatcher';
 import { TelegramBotService } from './services/TelegramBotService';
 import type { NotificationJobPayload } from '@chaintrigger/shared';
 
-const POLLING_INTERVAL_MS = 60000; // 60 saniyede bir Birdeye'ı kontrol et (API maliyet tasarrufu)
+const POLLING_INTERVAL_MS = 10000; // 10 saniyede bir kontrol (Pro için 10s, Free için 60s)
 const QUEUE_NAME = 'notifications';
 
 async function bootstrap() {
+  let tick = 0;
   console.log('🚀 Birdeye Catalyst Worker başlatılıyor...');
 
   const mongoUri = process.env.MONGO_URI || 'mongodb://mongodb:27017/chaintrigger';
@@ -72,8 +73,9 @@ async function bootstrap() {
   // 4. Ana Engine Döngüsü (Polling)
   setInterval(async () => {
     try {
-      console.log(`[Engine] Kurallar değerlendiriliyor... (${new Date().toISOString()})`);
-      await ruleEngine.process();
+      console.log(`[Engine] Tick: ${tick} | Kurallar değerlendiriliyor...`);
+      await ruleEngine.process(tick);
+      tick = (tick + 1) % 60; // 0-59 arası döner
     } catch (error) {
       console.error('[Engine] Kritik Hata:', error);
     }

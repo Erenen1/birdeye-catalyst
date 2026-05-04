@@ -42,6 +42,19 @@ const UserSchema = new Schema<IUserDocument>(
     telegramUsername: {
       type: String,
     },
+    proUntil: {
+      type: Date,
+    },
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true, // Only for those who have it
+      index: true,
+    },
+    referredBy: {
+      type: String,
+      index: true,
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: false }, // updatedAt gerekli değil

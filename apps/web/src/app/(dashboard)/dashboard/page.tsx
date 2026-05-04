@@ -121,21 +121,39 @@ export default function Dashboard() {
     }
   }, [address]);
 
+  const [userStatus, setUserStatus] = useState<any>(null);
+
+  const fetchUserStatus = useCallback(async () => {
+    if (!address) return;
+    try {
+      const res = await fetch(`/api/user/status?address=${address}`);
+      const data = await res.json();
+      setUserStatus(data);
+    } catch (error) {
+      console.error('Error fetching user status:', error);
+    }
+  }, [address]);
+
   useEffect(() => {
     if (isConnected) {
       fetchRules();
       fetchAlerts();
       fetchGlobalAlerts();
       fetchTracked();
+      fetchUserStatus();
       const interval = setInterval(() => {
         fetchAlerts();
         fetchGlobalAlerts();
+        fetchUserStatus();
       }, 30000);
       return () => clearInterval(interval);
     } else {
       setLoading(false);
     }
-  }, [isConnected, fetchRules, fetchAlerts, fetchGlobalAlerts, fetchTracked]);
+  }, [isConnected, fetchRules, fetchAlerts, fetchGlobalAlerts, fetchTracked, fetchUserStatus]);
+
+  const isPro = userStatus?.tier === 'pro';
+  const limit = isPro ? 50 : 3;
 
   const toggleRule = async (id: string, currentStatus: boolean) => {
     try {
@@ -214,7 +232,7 @@ export default function Dashboard() {
             </div>
           </div>
           <button 
-            onClick={() => rules.length >= 3 ? setIsWaitlistOpen(true) : setIsFormOpen(true)}
+            onClick={() => rules.length >= limit ? setIsWaitlistOpen(true) : setIsFormOpen(true)}
             className="w-full md:w-auto bg-mint text-black px-4 py-2 md:py-1.5 flex items-center justify-center md:justify-start gap-2 font-bold uppercase tracking-widest text-[10px] hover:brightness-110 transition-all shadow-glow"
           >
             <Plus size={14} />
@@ -327,7 +345,7 @@ export default function Dashboard() {
                 </div>
               ))}
 
-              {rules.length < 3 && Array(3 - rules.length).fill(0).map((_, i) => (
+              {rules.length < limit && Array(Math.min(limit - rules.length, 3)).fill(0).map((_, i) => (
                 <div 
                   key={`empty-${i}`} 
                   onClick={() => setIsFormOpen(true)}
@@ -337,7 +355,7 @@ export default function Dashboard() {
                     <Plus size={24} />
                   </div>
                   <div className="text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest text-center">
-                    Slot Available<br/>{i + 1 + rules.length} / 3 Remaining
+                    Slot Available<br/>{rules.length + i + 1} / {limit}
                   </div>
                 </div>
               ))}

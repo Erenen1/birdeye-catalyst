@@ -12,7 +12,7 @@ import type { IRuleRepository } from '../interfaces/IRuleRepository';
 import type { IRule, BirdeyeToken, NotificationJobPayload, TriggerType, BirdeyeSecurityData, BirdeyeMarketData } from '@chaintrigger/shared';
 import { OperatorRegistry } from './operators/OperatorRegistry';
 import { TriggerRegistry } from './strategies/TriggerRegistry';
-import { AlertModel } from '@chaintrigger/shared';
+import { AlertModel, UserModel } from '@chaintrigger/shared';
 
 export class RuleEngine {
   constructor(
@@ -54,9 +54,23 @@ export class RuleEngine {
    * Engine döngüsünün ana fonksiyonu. Tüm aktif kuralları çeker,
    * ilgili trigger tipine göre eşleştirme yapar.
    */
-  async process(): Promise<void> {
+  async process(tick: number): Promise<void> {
     const dbRules = await this.ruleRepository.findAllActive();
-    const activeRules = [...dbRules, ...RuleEngine.SYSTEM_RULES as IRule[]];
+    
+    // Fetch user tiers for filtering speed
+    const userIds = [...new Set(dbRules.map(r => r.userId))];
+    const users = await UserModel.find({ walletAddress: { $in: userIds } }).select('walletAddress tier').lean().exec();
+    const userTierMap = new Map(users.map(u => [u.walletAddress, u.tier]));
+
+    // Filter rules based on tier and tick
+    const activeRules = [
+      ...dbRules.filter(r => {
+        const tier = (userTierMap.get(r.userId) || 'free') as string;
+        if (tier === 'pro') return true; // Pro rules every 10s
+        return tick % 6 === 0; // Free rules every 60s (approx)
+      }),
+      ...RuleEngine.SYSTEM_RULES as IRule[] // System rules always
+    ];
     
     const jobPromises: Promise<any>[] = [];
 
@@ -73,15 +87,16 @@ export class RuleEngine {
 
       const tokens = cachedTokens.get(cacheKey) || [];
       for (const token of tokens) {
-        jobPromises.push(this.processRuleForToken(rule, token));
+        const tier = (userTierMap.get(rule.userId) || 'pro') as string; // System rules are pro-level
+        jobPromises.push(this.processRuleForToken(rule, token, tier));
       }
     }
 
     await Promise.allSettled(jobPromises);
   }
 
-  private async processRuleForToken(rule: IRule, token: BirdeyeToken): Promise<void> {
-    const { isMatch, security, marketData } = await this.evaluateConditions(rule, token);
+  private async processRuleForToken(rule: IRule, token: BirdeyeToken, tier: string = 'free'): Promise<void> {
+    const { isMatch, security, marketData } = await this.evaluateConditions(rule, token, tier);
     if (isMatch) {
       // Persist match for dashboard feed
       await AlertModel.create({
@@ -97,7 +112,39 @@ export class RuleEngine {
       if (rule.userId !== 'GLOBAL' && rule.action) {
         await this.enqueueNotification(rule, token, security, marketData);
       }
+
+      // 10% Chance to send to Public Alpha Channel (Marketing)
+      if (rule.userId === 'GLOBAL' && Math.random() < 0.1) {
+        await this.enqueueGlobalAlpha(token, security, marketData, rule.chain);
+      }
     }
+  }
+
+  /**
+   * Public Telegram kanalına sinyal gönderir (Pazarlama amaçlı)
+   */
+  private async enqueueGlobalAlpha(
+    token: BirdeyeToken, 
+    security: BirdeyeSecurityData,
+    marketData?: BirdeyeMarketData,
+    chain: string = 'solana'
+  ): Promise<void> {
+    const payload: NotificationJobPayload = {
+      ruleId: 'GLOBAL_ALPHA_FEED',
+      userId: 'PUBLIC',
+      action: { type: 'telegram', params: { chatId: process.env.PUBLIC_CHANNEL_ID || '@BirdeyeCatalystAlpha' } } as any,
+      token,
+      security,
+      marketData,
+      chain,
+      triggeredAt: new Date(),
+    };
+
+    // Public channel alerts are slightly delayed to keep Pro value
+    await this.notificationQueue.add('send-notification', payload, {
+      delay: 30000, // 30s delay for public feed
+      jobId: `public-${token.address}-${Date.now()}`,
+    });
   }
 
   /**
@@ -106,7 +153,8 @@ export class RuleEngine {
    */
   private async evaluateConditions(
     rule: IRule, 
-    token: BirdeyeToken
+    token: BirdeyeToken,
+    tier: string = 'free'
   ): Promise<{ isMatch: boolean; security: BirdeyeSecurityData; marketData?: BirdeyeMarketData }> {
     // 1. Temel Filtreleme (API Gerektirmeyen alanlar)
     const basicFields = ['liquidity', 'volume_24h', 'price_change_24h'];
@@ -130,6 +178,19 @@ export class RuleEngine {
         isMatch: false, 
         security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 } 
       };
+    }
+
+    // 2. Pro Filtreleme Bariyeri
+    // Sadece PRO kullanıcılar veya Global sistem kuralları gelişmiş filtreleri kullanabilir
+    const advancedFields = ['security_score', 'no_mint_authority', 'no_freeze_authority', 'top_10_holder_percent'];
+    const hasAdvancedConditions = rule.conditions.some(c => advancedFields.includes(c.field));
+
+    if (tier !== 'pro' && rule.userId !== 'GLOBAL' && hasAdvancedConditions) {
+       // Free users cannot match advanced conditions
+       return { 
+         isMatch: false, 
+         security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 } 
+       };
     }
 
     // 2. Güvenlik ve Market Verisi Fetching (Sadece temel filtreyi geçenler için)

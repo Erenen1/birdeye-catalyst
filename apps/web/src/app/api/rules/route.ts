@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import { RuleModel } from '@chaintrigger/shared';
+import { RuleModel, UserModel, FREE_TIER_RULE_LIMIT } from '@chaintrigger/shared';
 
 export async function GET(request: Request) {
   try {
@@ -20,16 +20,60 @@ export async function POST(request: Request) {
     await dbConnect();
     const body = await request.json();
 
-    // Validate basic requirements
-    if (!body.name || !body.triggerType || !body.conditions || !body.action) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const { userId, name, triggerType, conditions, action, chain } = body;
+
+    // 1. Input Validation & Sanitization (Injection Prevention)
+    if (!userId || !/^0x[a-fA-F0-9]{40}$|^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(userId)) {
+      return NextResponse.json({ error: 'Invalid or missing wallet address' }, { status: 400 });
+    }
+
+    if (!name || name.length > 50) {
+      return NextResponse.json({ error: 'Name is required and must be under 50 chars' }, { status: 400 });
+    }
+
+    if (!['new_listing', 'trending_entry', 'pump_fun_migration', 'whale_radar'].includes(triggerType)) {
+      return NextResponse.json({ error: 'Invalid trigger type' }, { status: 400 });
+    }
+
+    if (!Array.isArray(conditions) || conditions.length === 0) {
+      return NextResponse.json({ error: 'At least one condition is required' }, { status: 400 });
+    }
+
+    // 2. Authorization Check (Broken Access Control Prevention)
+    // [SECURITY NOTE] In production, verify that 'userId' matches the authenticated session wallet.
+    // const session = await getServerSession();
+    // if (session.user.address !== userId) return forbidden;
+
+    // 3. Check User Tier & Limits
+    const user = await UserModel.findOne({ walletAddress: userId.toLowerCase() });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const currentCount = await RuleModel.countDocuments({ userId, isActive: true });
+    const limit = user.tier === 'pro' ? 50 : FREE_TIER_RULE_LIMIT;
+
+    if (currentCount >= limit) {
+      return NextResponse.json({ 
+        error: `Limit reached. ${user.tier.toUpperCase()} users are limited to ${limit} active nodes. Upgrade to PRO for more.` 
+      }, { status: 403 });
     }
 
     const newRule = await RuleModel.create({
-      ...body,
-      userId: body.userId,
+      name: name.trim(),
+      triggerType,
+      conditions,
+      action,
+      chain: chain || 'solana',
+      userId: userId.toLowerCase(),
       isActive: true,
     });
+
+    // Update user's count
+    await UserModel.findOneAndUpdate(
+      { walletAddress: userId.toLowerCase() },
+      { $inc: { activeRuleCount: 1 } }
+    );
 
     return NextResponse.json(newRule, { status: 201 });
   } catch (error: any) {

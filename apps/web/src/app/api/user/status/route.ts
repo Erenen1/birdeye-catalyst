@@ -1,35 +1,43 @@
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
+import dbConnect from '@/lib/db';
 import { UserModel } from '@chaintrigger/shared';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get('address');
 
-  if (!address) {
-    return NextResponse.json({ error: 'Address is required' }, { status: 400 });
+  // 1. CPU-Efficient Validation (Linear Regex, No Backtracking)
+  if (!address || !/^0x[a-fA-F0-9]{40}$|^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
+    return NextResponse.json({ error: 'Invalid wallet address' }, { status: 400 });
   }
 
   try {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URI!);
-    }
+    await dbConnect();
 
+    const refCode = searchParams.get('ref')?.substring(0, 12).replace(/[^a-zA-Z0-9]/g, '');
     let user = await UserModel.findOne({ walletAddress: address.toLowerCase() });
     
     if (!user) {
+      // Generate unique referral code
+      const myRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
       // Create user if not exists
       user = await UserModel.create({
         walletAddress: address.toLowerCase(),
         tier: 'free',
-        activeRuleCount: 0
+        activeRuleCount: 0,
+        referralCode: myRefCode,
+        referredBy: refCode || undefined
       });
     }
 
     return NextResponse.json({
       isConnected: !!user.telegramChatId,
       telegramUsername: user.telegramUsername,
-      telegramChatId: user.telegramChatId
+      telegramChatId: user.telegramChatId,
+      tier: user.tier,
+      proUntil: user.proUntil,
+      referralCode: user.referralCode
     });
   } catch (error) {
     console.error('Error fetching user status:', error);

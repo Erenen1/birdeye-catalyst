@@ -16,19 +16,14 @@ export default function DashboardLayout({
   const { address, isConnected, isConnecting } = useAccount();
   const router = useRouter();
   const [ruleCount, setRuleCount] = useState(0);
+  const [userStatus, setUserStatus] = useState<any>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Dashboard koruması
-  useEffect(() => {
-    if (isMounted && !isConnecting && !isConnected) {
-      router.replace('/');
-    }
-  }, [isConnected, isConnecting, isMounted, router]);
-
+  // Fetch functions
   const fetchCount = useCallback(async () => {
     if (!address) {
       setRuleCount(0);
@@ -45,15 +40,37 @@ export default function DashboardLayout({
     }
   }, [address]);
 
+  const fetchUserStatus = useCallback(async () => {
+    if (!address) return;
+    try {
+      const res = await fetch(`/api/user/status?address=${address}`);
+      const data = await res.json();
+      setUserStatus(data);
+    } catch (error) {
+      console.error('Error fetching user status:', error);
+    }
+  }, [address]);
+
+  // Dashboard protection
+  useEffect(() => {
+    if (isMounted && !isConnecting && !isConnected) {
+      router.replace('/');
+    }
+  }, [isConnected, isConnecting, isMounted, router]);
+
   useEffect(() => {
     if (isConnected) {
       fetchCount();
-      const interval = setInterval(fetchCount, 10000);
+      fetchUserStatus();
+      const interval = setInterval(() => {
+        fetchCount();
+        fetchUserStatus();
+      }, 10000);
       return () => clearInterval(interval);
     }
-  }, [fetchCount, isConnected]);
+  }, [fetchCount, fetchUserStatus, isConnected]);
 
-  // Yükleme veya bağlantı yoksa içeriği gösterme
+  // Loading state
   if (!isMounted || isConnecting || !isConnected) {
     return (
       <div className="h-screen w-screen bg-[#08090d] flex items-center justify-center font-mono">
@@ -67,7 +84,18 @@ export default function DashboardLayout({
     );
   }
 
-  const usagePercent = (ruleCount / 3) * 100;
+  const isPro = userStatus?.tier === 'pro';
+  const limit = isPro ? 50 : 3;
+  const usagePercent = Math.min((ruleCount / limit) * 100, 100);
+
+  const navLinks = [
+    { href: '/dashboard', icon: LayoutDashboard, label: 'Nodes' },
+    { href: '/terminal', icon: Zap, label: 'Terminal' },
+    { href: '/blueprint', icon: Database, label: 'Blueprint' },
+    { href: '/portfolio', icon: Terminal, label: 'Alpha' },
+    { href: '/upgrade', icon: FileText, label: 'Upgrade', isProFeature: true },
+    { href: '/academy', icon: HelpCircle, label: 'Academy' },
+  ];
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-background text-on-surface overflow-hidden">
@@ -83,31 +111,20 @@ export default function DashboardLayout({
         </Link>
         
         <nav className="flex flex-col gap-6 flex-1">
-          <Link href="/dashboard" className={`w-10 h-10 flex items-center justify-center transition-all relative group ${pathname === '/dashboard' ? 'bg-mint text-black shadow-glow' : 'text-[#4a4b52] hover:text-white'}`}>
-            <LayoutDashboard size={18} />
-            {pathname === '/dashboard' && <div className="absolute -right-[15px] w-1 h-4 bg-mint"></div>}
-            <div className="absolute inset-0 border border-mint/0 group-hover:border-mint/20 transition-all"></div>
-          </Link>
-          <Link href="/terminal" className={`w-10 h-10 flex items-center justify-center transition-all relative group ${pathname === '/terminal' ? 'bg-mint text-black shadow-glow' : 'text-[#4a4b52] hover:text-white'}`}>
-            <Zap size={18} />
-            {pathname === '/terminal' && <div className="absolute -right-[15px] w-1 h-4 bg-mint"></div>}
-            <div className="absolute inset-0 border border-mint/0 group-hover:border-mint/20 transition-all"></div>
-          </Link>
-          <Link href="/blueprint" className={`w-10 h-10 flex items-center justify-center transition-all relative group ${pathname === '/blueprint' ? 'bg-mint text-black shadow-glow' : 'text-[#4a4b52] hover:text-white'}`}>
-            <Database size={18} />
-            {pathname === '/blueprint' && <div className="absolute -right-[15px] w-1 h-4 bg-mint"></div>}
-            <div className="absolute inset-0 border border-mint/0 group-hover:border-mint/20 transition-all"></div>
-          </Link>
-          <Link href="/portfolio" className={`w-10 h-10 flex items-center justify-center transition-all relative group ${pathname === '/portfolio' ? 'bg-mint text-black shadow-glow' : 'text-[#4a4b52] hover:text-white'}`}>
-            <Terminal size={18} />
-            {pathname === '/portfolio' && <div className="absolute -right-[15px] w-1 h-4 bg-mint"></div>}
-            <div className="absolute inset-0 border border-mint/0 group-hover:border-mint/20 transition-all"></div>
-          </Link>
-          <Link href="/academy" className={`w-10 h-10 flex items-center justify-center transition-all relative group ${pathname === '/academy' ? 'bg-mint text-black shadow-glow' : 'text-[#4a4b52] hover:text-white'}`}>
-            <HelpCircle size={18} />
-            {pathname === '/academy' && <div className="absolute -right-[15px] w-1 h-4 bg-mint"></div>}
-            <div className="absolute inset-0 border border-mint/0 group-hover:border-mint/20 transition-all"></div>
-          </Link>
+          {navLinks.map((link) => (
+            <Link 
+              key={link.href}
+              href={link.href} 
+              className={`w-10 h-10 flex items-center justify-center transition-all relative group ${pathname === link.href ? 'bg-mint text-black shadow-glow' : 'text-[#4a4b52] hover:text-white'}`}
+            >
+              <link.icon size={18} />
+              {pathname === link.href && <div className="absolute -right-[15px] w-1 h-4 bg-mint"></div>}
+              {link.isProFeature && isPro && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber rounded-full shadow-glow"></div>
+              )}
+              <div className="absolute inset-0 border border-mint/0 group-hover:border-mint/10 transition-all"></div>
+            </Link>
+          ))}
         </nav>
       </aside>
 
@@ -120,12 +137,15 @@ export default function DashboardLayout({
                <div className="w-2 md:w-2.5 h-2 md:h-2.5 bg-black -rotate-45"></div>
             </div>
             <h1 className="text-xs md:text-sm font-bold tracking-[0.1em] md:tracking-[0.2em] text-mint uppercase">Catalyst</h1>
+            {isPro && (
+              <span className="ml-2 px-2 py-0.5 bg-amber/10 border border-amber/30 text-amber text-[8px] font-bold uppercase tracking-widest">PRO</span>
+            )}
           </div>
 
           <div className="flex items-center gap-3 md:gap-6">
             <div className="hidden sm:flex items-center gap-3">
-               <span className="text-[9px] font-mono text-[#4a4b52] tracking-widest uppercase">Usage:</span>
-               <span className="text-[9px] font-mono text-white">{ruleCount}/3</span>
+               <span className="text-[9px] font-mono text-[#4a4b52] tracking-widest uppercase">Nodes:</span>
+               <span className="text-[9px] font-mono text-white">{ruleCount}/{limit}</span>
                <div className="progress-bar-container w-16 md:w-24">
                   <div className="progress-bar-fill" style={{ width: `${usagePercent}%` }}></div>
                </div>
@@ -149,26 +169,16 @@ export default function DashboardLayout({
 
       {/* Bottom Navigation - Mobile Only */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#08090d] border-t border-[#1c1d24] flex items-center justify-around px-2 z-30">
-        <Link href="/dashboard" className={`flex flex-col items-center gap-1 ${pathname === '/dashboard' ? 'text-mint' : 'text-[#4a4b52]'}`}>
-          <LayoutDashboard size={20} />
-          <span className="text-[8px] font-mono uppercase tracking-tighter">Nodes</span>
-        </Link>
-        <Link href="/terminal" className={`flex flex-col items-center gap-1 ${pathname === '/terminal' ? 'text-mint' : 'text-[#4a4b52]'}`}>
-          <Zap size={20} />
-          <span className="text-[8px] font-mono uppercase tracking-tighter">Terminal</span>
-        </Link>
-        <Link href="/blueprint" className={`flex flex-col items-center gap-1 ${pathname === '/blueprint' ? 'text-mint' : 'text-[#4a4b52]'}`}>
-          <Database size={20} />
-          <span className="text-[8px] font-mono uppercase tracking-tighter">Blueprint</span>
-        </Link>
-        <Link href="/portfolio" className={`flex flex-col items-center gap-1 ${pathname === '/portfolio' ? 'text-mint' : 'text-[#4a4b52]'}`}>
-          <Terminal size={20} />
-          <span className="text-[8px] font-mono uppercase tracking-tighter">Alpha</span>
-        </Link>
-        <Link href="/academy" className={`flex flex-col items-center gap-1 ${pathname === '/academy' ? 'text-mint' : 'text-[#4a4b52]'}`}>
-          <HelpCircle size={20} />
-          <span className="text-[8px] font-mono uppercase tracking-tighter">Academy</span>
-        </Link>
+        {navLinks.map((link) => (
+          <Link 
+            key={link.href}
+            href={link.href} 
+            className={`flex flex-col items-center gap-1 ${pathname === link.href ? 'text-mint' : 'text-[#4a4b52]'}`}
+          >
+            <link.icon size={20} />
+            <span className="text-[8px] font-mono uppercase tracking-tighter">{link.label}</span>
+          </Link>
+        ))}
       </nav>
     </div>
 

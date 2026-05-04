@@ -16,6 +16,21 @@ export class CustomWebhookProvider implements INotificationProvider {
     const action = payload.action as CustomWebhookAction;
 
     // Hedef URL'ye standart JSON payload'unu doğrudan gönderiyoruz
+    // SSRF Koruması: Yerel veya özel ağlara (Internal/Private IPs) erişimi engelle
+    const isInternal = 
+      action.endpoint.includes('localhost') || 
+      action.endpoint.includes('127.0.0.1') || 
+      action.endpoint.includes('192.168.') || 
+      action.endpoint.includes('10.') || 
+      action.endpoint.includes('172.16.') || 
+      action.endpoint.includes('mongodb') || 
+      action.endpoint.includes('redis');
+
+    if (isInternal) {
+      console.warn(`[SSRF Blocked] Internal endpoint: ${action.endpoint}`);
+      return;
+    }
+
     await axios.post(action.endpoint, payload, {
       headers: {
         'Content-Type': 'application/json',
