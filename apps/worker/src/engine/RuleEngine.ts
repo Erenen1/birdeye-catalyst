@@ -23,12 +23,41 @@ export class RuleEngine {
     private readonly triggerRegistry: TriggerRegistry = new TriggerRegistry()
   ) {}
 
+  private static readonly SYSTEM_RULES: Partial<IRule>[] = [
+    {
+      _id: 'sys-new-listing',
+      userId: 'GLOBAL',
+      name: 'Global New Listing Observer',
+      triggerType: 'new_listing',
+      chain: 'solana',
+      conditions: [{ field: 'liquidity', operator: '>', value: 1000 }]
+    },
+    {
+      _id: 'sys-pump-fun',
+      userId: 'GLOBAL',
+      name: 'Global Pump.fun Observer',
+      triggerType: 'pump_fun_migration',
+      chain: 'solana',
+      conditions: []
+    },
+    {
+      _id: 'sys-whale-radar',
+      userId: 'GLOBAL',
+      name: 'Global Whale Activity Observer',
+      triggerType: 'whale_radar',
+      chain: 'solana',
+      conditions: [{ field: 'volume_24h', operator: '>', value: 100000 }]
+    }
+  ];
+
   /**
    * Engine döngüsünün ana fonksiyonu. Tüm aktif kuralları çeker,
    * ilgili trigger tipine göre eşleştirme yapar.
    */
   async process(): Promise<void> {
-    const activeRules = await this.ruleRepository.findAllActive();
+    const dbRules = await this.ruleRepository.findAllActive();
+    const activeRules = [...dbRules, ...RuleEngine.SYSTEM_RULES as IRule[]];
+    
     const jobPromises: Promise<any>[] = [];
 
     // Trigger + Chain kombinasyonuna göre gruplandırılmış tokenlar (cacheleme için)
@@ -64,7 +93,10 @@ export class RuleEngine {
         chain: rule.chain
       });
 
-      await this.enqueueNotification(rule, token, security, marketData);
+      // Sistem kuralları bildirim göndermez (Sadece veri biriktirir)
+      if (rule.userId !== 'GLOBAL' && rule.action) {
+        await this.enqueueNotification(rule, token, security, marketData);
+      }
     }
   }
 
