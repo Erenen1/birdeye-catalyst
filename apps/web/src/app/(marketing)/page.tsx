@@ -375,7 +375,7 @@ export default function LandingPage() {
                      <span className="text-[10px] font-bold uppercase tracking-widest">Risk_Warning</span>
                   </div>
                   <p className="text-[9px] font-mono text-[#4a4b52] leading-relaxed uppercase">
-                     Kripto varlık ticareti yüksek risk içerir. Catalyst Node'ları tarafından sağlanan veriler piyasa gözlemine dayalı teknik istatistiklerdir. Geçmiş performans gelecek sonuçların garantisi değildir. Sermayenizin tamamını kaybedebilirsiniz.
+                     Trading crypto assets involves significant risk. Data provided by Catalyst Nodes are technical statistics based on market observation. Past performance is not indicative of future results. You may lose your entire capital.
                   </p>
                </div>
                <div className="space-y-4 text-left">
@@ -384,7 +384,7 @@ export default function LandingPage() {
                      <span className="text-[10px] font-bold uppercase tracking-widest">Legal_Disclaimer</span>
                   </div>
                   <p className="text-[9px] font-mono text-[#4a4b52] leading-relaxed uppercase">
-                     Birdeye Catalyst bir yatırım danışmanlığı hizmeti değildir. Sunulan tüm veriler sadece bilgilendirme amaçlıdır. Yazılım hataları, veri gecikmeleri veya piyasa manipülasyonlarından kaynaklı zararlardan platform sorumlu tutulamaz.
+                     Birdeye Catalyst is not a financial advisory service. All data presented is for informational purposes only. The platform cannot be held liable for losses resulting from software errors, data delays, or market manipulation.
                   </p>
                </div>
             </div>
