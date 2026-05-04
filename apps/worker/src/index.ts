@@ -23,8 +23,8 @@ const QUEUE_NAME = 'notifications';
 async function bootstrap() {
   console.log('🚀 Birdeye Catalyst Worker başlatılıyor...');
 
-  const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/chaintrigger';
-  const redisHost = process.env.REDIS_HOST || 'localhost';
+  const mongoUri = process.env.MONGO_URI || 'mongodb://mongodb:27017/chaintrigger';
+  const redisHost = process.env.REDIS_HOST || 'redis';
   const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
   const birdeyeApiKey = process.env.BIRDEYE_API_KEY || 'test_api_key';
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN || 'test_bot_token';

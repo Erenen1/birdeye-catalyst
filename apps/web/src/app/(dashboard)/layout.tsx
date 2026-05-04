@@ -93,9 +93,9 @@ export default function DashboardLayout({
             {pathname === '/terminal' && <div className="absolute -right-[15px] w-1 h-4 bg-mint"></div>}
             <div className="absolute inset-0 border border-mint/0 group-hover:border-mint/20 transition-all"></div>
           </Link>
-          <Link href="/market" className={`w-10 h-10 flex items-center justify-center transition-all relative group ${pathname === '/market' ? 'bg-mint text-black shadow-glow' : 'text-[#4a4b52] hover:text-white'}`}>
+          <Link href="/blueprint" className={`w-10 h-10 flex items-center justify-center transition-all relative group ${pathname === '/blueprint' ? 'bg-mint text-black shadow-glow' : 'text-[#4a4b52] hover:text-white'}`}>
             <Database size={18} />
-            {pathname === '/market' && <div className="absolute -right-[15px] w-1 h-4 bg-mint"></div>}
+            {pathname === '/blueprint' && <div className="absolute -right-[15px] w-1 h-4 bg-mint"></div>}
             <div className="absolute inset-0 border border-mint/0 group-hover:border-mint/20 transition-all"></div>
           </Link>
           <Link href="/portfolio" className={`w-10 h-10 flex items-center justify-center transition-all relative group ${pathname === '/portfolio' ? 'bg-mint text-black shadow-glow' : 'text-[#4a4b52] hover:text-white'}`}>
@@ -157,9 +157,9 @@ export default function DashboardLayout({
           <Zap size={20} />
           <span className="text-[8px] font-mono uppercase tracking-tighter">Terminal</span>
         </Link>
-        <Link href="/market" className={`flex flex-col items-center gap-1 ${pathname === '/market' ? 'text-mint' : 'text-[#4a4b52]'}`}>
+        <Link href="/blueprint" className={`flex flex-col items-center gap-1 ${pathname === '/blueprint' ? 'text-mint' : 'text-[#4a4b52]'}`}>
           <Database size={20} />
-          <span className="text-[8px] font-mono uppercase tracking-tighter">Market</span>
+          <span className="text-[8px] font-mono uppercase tracking-tighter">Blueprint</span>
         </Link>
         <Link href="/portfolio" className={`flex flex-col items-center gap-1 ${pathname === '/portfolio' ? 'text-mint' : 'text-[#4a4b52]'}`}>
           <Terminal size={20} />

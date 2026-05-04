@@ -116,6 +116,7 @@ export interface IAlert {
   _id?: string;
   ruleId: string;
   userId: string;
+  triggerType: TriggerType;
   token: BirdeyeToken;
   security: BirdeyeSecurityData;
   chain: string;

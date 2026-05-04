@@ -7,6 +7,7 @@ const AlertSchema = new Schema<IAlertDocument>(
   {
     ruleId: { type: String, required: true, index: true },
     userId: { type: String, required: true, index: true },
+    triggerType: { type: String, required: true, index: true },
     token: {
       address: { type: String, required: true },
       symbol: { type: String, required: true },

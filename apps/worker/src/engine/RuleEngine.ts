@@ -58,6 +58,7 @@ export class RuleEngine {
       await AlertModel.create({
         ruleId: rule._id,
         userId: rule.userId,
+        triggerType: rule.triggerType,
         token,
         security,
         chain: rule.chain
