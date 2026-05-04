@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0b10;
+  --foreground: #e3e1e9;
+  --mint: #00ff9f;
+  --amber: #ffb800;
+  --surface: #121318;
+  --border: #1c1d24;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-[#e3e1e9] font-sans antialiased text-sm;
+    image-rendering: crisp-edges;
+  }
+}
+
+@layer components {
+  .pixel-card {
+    @apply bg-surface border border-[#1c1d24] p-5 relative;
+  }
+
+  .recessed-box {
+    @apply bg-[#08090d] border border-[#1c1d24] p-2.5 font-mono text-[13px] leading-none;
+    box-shadow: inset 2px 2px 4px rgba(0,0,0,0.5);
+  }
+
+  .elbow-connector {
+    @apply absolute left-4 w-4 h-6 border-l border-b border-[#2d3142];
+  }
+
+  .pixel-button-mint {
+    @apply bg-mint text-black font-bold uppercase py-1.5 px-4 hover:brightness-110 active:translate-y-[1px] transition-all flex items-center gap-2 text-[11px] tracking-widest;
+  }
+
+  .progress-bar-container {
+    @apply h-1.5 w-24 bg-[#1c1d24] relative;
+  }
+
+  .progress-bar-fill {
+    @apply h-full bg-mint transition-all duration-500;
+  }
+
+  .grid-bg {
+    background-image: linear-gradient(to right, #1c1d24 0.5px, transparent 0.5px), linear-gradient(to bottom, #1c1d24 0.5px, transparent 0.5px);
+    background-size: 40px 40px;
+  }
+
+  .scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 5;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 255, 159, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
+    opacity: 0.1;
+    position: absolute;
+    bottom: 100%;
+    animation: scanline 10s linear infinite;
+  }
+}
+
+@keyframes scanline {
+  0% { bottom: 100%; }
+  100% { bottom: -100%; }
+}
+
+@keyframes flicker {
+  0% { opacity: 0.27861; }
+  5% { opacity: 0.34769; }
+  10% { opacity: 0.23604; }
+  15% { opacity: 0.90626; }
+  20% { opacity: 0.18128; }
+  25% { opacity: 0.83891; }
+  30% { opacity: 0.65583; }
+  35% { opacity: 0.57807; }
+  40% { opacity: 0.26559; }
+  45% { opacity: 0.84693; }
+  50% { opacity: 0.96019; }
+  55% { opacity: 0.08523; }
+  60% { opacity: 0.71313; }
+  65% { opacity: 0.09047; }
+  70% { opacity: 0.57036; }
+  75% { opacity: 0.75151; }
+  80% { opacity: 0.91644; }
+  85% { opacity: 0.45905; }
+  90% { opacity: 0.35193; }
+  95% { opacity: 0.85651; }
+  100% { opacity: 0.34825; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #0a0b10; }
+::-webkit-scrollbar-thumb { background: #1c1d24; }
+::-webkit-scrollbar-thumb:hover { background: #00ff9f; }

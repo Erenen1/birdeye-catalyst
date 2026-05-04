@@ -1,0 +1,26 @@
+{
+  "name": "@chaintrigger/worker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@chaintrigger/shared": "1.0.0",
+    "axios": "^1.6.8",
+    "axios-retry": "^4.0.0",
+    "bullmq": "^5.7.8",
+    "mongoose": "^8.4.0",
+    "node-telegram-bot-api": "^0.65.0",
+    "redis": "^4.6.13",
+    "ts-node-dev": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "@types/node-telegram-bot-api": "^0.64.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}

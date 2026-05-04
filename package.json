@@ -1,0 +1,17 @@
+{
+  "name": "chaintrigger-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:worker": "npm run dev --workspace=@chaintrigger/worker",
+    "dev:web": "npm run dev --workspace=@chaintrigger/web",
+    "build": "npm run build --workspaces",
+    "type-check": "npm run type-check --workspaces"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
