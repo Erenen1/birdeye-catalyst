@@ -81,15 +81,18 @@ export default function MarketPage() {
     }
   ];
 
-  const [userTier, setUserTier] = useState('free');
+  const [userStatus, setUserStatus] = useState<any>(null);
 
   useEffect(() => {
     if (address) {
       fetch(`/api/user/status?address=${address}`)
         .then(res => res.json())
-        .then(data => setUserTier(data.tier || 'free'));
+        .then(data => setUserStatus(data));
     }
   }, [address]);
+
+  const userTier = userStatus?.tier || 'free';
+  const telegramChatId = userStatus?.telegramChatId;
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -98,6 +101,11 @@ export default function MarketPage() {
   const deployBlueprint = async (blueprint: typeof blueprints[0]) => {
     if (!address) return;
     setError(null);
+
+    if (!telegramChatId) {
+      setError('Please link your Telegram account in the dashboard first.');
+      return;
+    }
 
     if (blueprint.isProOnly && userTier !== 'pro') {
       setShowUpgradeModal(true);
@@ -111,9 +119,15 @@ export default function MarketPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...blueprint.config,
           name: blueprint.name,
           userId: address,
+          triggerType: blueprint.config.triggerType,
+          conditions: blueprint.config.conditions,
+          action: {
+            type: 'telegram',
+            chatId: telegramChatId,
+          },
+          chain: blueprint.config.chain,
         }),
       });
 

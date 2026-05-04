@@ -4,13 +4,16 @@ import type { NextRequest } from 'next/server';
 // Basit bir In-Memory Rate Limiter (Üretim ortamında Redis önerilir)
 const ipCache = new Map<string, { count: number; lastReset: number }>();
 
-const RATE_LIMIT_COUNT = 30; // 10 saniyede maksimum 30 istek
-const RATE_LIMIT_WINDOW = 10000; // 10 saniye
+const RATE_LIMIT_COUNT = 100; // 10 saniyede 100 istek (Geliştirme ve yoğun kullanım için daha esnek)
+const RATE_LIMIT_WINDOW = 10000; 
 
 export function middleware(request: NextRequest) {
-  // Sadece API rotalarını koru
+  // API rotalarını koru
   if (request.nextUrl.pathname.startsWith('/api')) {
-    const ip = request.ip || 'anonymous';
+    // IP tespitini iyileştir (Proxy arkasındaysa x-forwarded-for'a bak)
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const ip = forwardedFor ? forwardedFor.split(',')[0] : (request.ip || '127.0.0.1');
+    
     const now = Date.now();
 
     const clientData = ipCache.get(ip) || { count: 0, lastReset: now };

@@ -1,9 +1,8 @@
-/**
- * @file apps/worker/src/index.ts
- * @description Worker uygulamasının giriş noktası (Bootstrapper).
- *              Bağımlılıkların (Dependencies) oluşturulup (DI Container mantığı)
- *              sistemin ayağa kaldırıldığı yerdir.
- */
+import path from 'path';
+import dotenv from 'dotenv';
+
+// Konteynır içinde veya yerelde .env dosyasını garantili bul
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 import mongoose from 'mongoose';
 import { createClient } from 'redis';
@@ -17,7 +16,7 @@ import { NotificationDispatcher } from './dispatchers/NotificationDispatcher';
 import { TelegramBotService } from './services/TelegramBotService';
 import type { NotificationJobPayload } from '@chaintrigger/shared';
 
-const POLLING_INTERVAL_MS = 10000; // 10 saniyede bir kontrol (Pro için 10s, Free için 60s)
+const POLLING_INTERVAL_MS = 10000; 
 const QUEUE_NAME = 'notifications';
 
 async function bootstrap() {
@@ -27,8 +26,24 @@ async function bootstrap() {
   const mongoUri = process.env.MONGO_URI || 'mongodb://mongodb:27017/chaintrigger';
   const redisHost = process.env.REDIS_HOST || 'redis';
   const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
-  const birdeyeApiKey = process.env.BIRDEYE_API_KEY || 'test_api_key';
-  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN || 'test_bot_token';
+  const birdeyeApiKey = process.env.BIRDEYE_API_KEY;
+  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+
+  // Debug: Değişkenlerin kaynağını doğrula
+  if (birdeyeApiKey) {
+    console.log(`[Config] Birdeye API Key detected from System Environment: ${birdeyeApiKey.slice(0, 4)}...${birdeyeApiKey.slice(-4)}`);
+  } else {
+    console.warn('[Config] ⚠️ Birdeye API Key MISSING from environment! Using fallback.');
+  }
+
+  if (telegramBotToken) {
+    console.log(`[Config] Telegram Token detected from System Environment: ${telegramBotToken.slice(0, 6)}...`);
+  } else {
+    console.warn('[Config] ⚠️ Telegram Token MISSING from environment! Using fallback.');
+  }
+
+  const finalBirdeyeKey = birdeyeApiKey || 'test_api_key';
+  const finalTelegramToken = telegramBotToken || 'test_bot_token';
 
   // 1. Veritabanı Bağlantıları
   await mongoose.connect(mongoUri);
@@ -40,7 +55,7 @@ async function bootstrap() {
 
   // 2. Bağımlılık Enjeksiyonu (Dependency Injection)
   const ruleRepo = new MongoRuleRepository();
-  const birdeyeService = new BirdeyeService(birdeyeApiKey, redisClient);
+  const birdeyeService = new BirdeyeService(finalBirdeyeKey, redisClient);
 
   // Queue Oluşturma (Engine job ekler, Dispatcher dinler)
   const notificationQueue = new Queue<NotificationJobPayload>(QUEUE_NAME, {
@@ -59,13 +74,13 @@ async function bootstrap() {
   const dispatcher = new NotificationDispatcher(
     { host: redisHost, port: redisPort },
     [
-      new TelegramProvider(telegramBotToken),
+      new TelegramProvider(finalTelegramToken),
       new CustomWebhookProvider()
     ]
   );
 
   // 4. Telegram Bot Service (For deep-linking /start)
-  const telegramBotService = new TelegramBotService(telegramBotToken);
+  const telegramBotService = new TelegramBotService(finalTelegramToken);
 
 
   console.log('⚙️ Worker Engine aktif. Döngü başlatılıyor...');

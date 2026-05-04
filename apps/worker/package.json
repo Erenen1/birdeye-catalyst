@@ -12,6 +12,7 @@
     "axios": "^1.6.8",
     "axios-retry": "^4.0.0",
     "bullmq": "^5.7.8",
+    "dotenv": "^16.4.5",
     "mongoose": "^8.4.0",
     "node-telegram-bot-api": "^0.65.0",
     "redis": "^4.6.13",

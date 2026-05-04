@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
+import dbConnect from '@/lib/db';
 import { UserModel } from '@chaintrigger/shared';
-
 
 export async function POST(request: Request) {
   try {
@@ -11,20 +10,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Address is required' }, { status: 400 });
     }
 
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGO_URI!);
-    }
+    await dbConnect();
 
     // Generate a random 8-character token
     const token = `verify_${Math.random().toString(36).substring(2, 10)}`;
 
-    const user = await UserModel.findOneAndUpdate(
+    await UserModel.findOneAndUpdate(
       { walletAddress: address.toLowerCase() },
       { telegramVerificationToken: token },
       { upsert: true, new: true }
     );
 
-    const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'ChainTriggerBot';
+    const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'BirdeyeCatalystBot';
     const link = `https://t.me/${botUsername}?start=${token}`;
 
     return NextResponse.json({ link, token });
