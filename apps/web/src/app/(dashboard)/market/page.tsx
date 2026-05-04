@@ -9,6 +9,7 @@ export default function MarketPage() {
   const { address } = useAccount();
   const router = useRouter();
   const [deploying, setDeploying] = useState<string | null>(null);
+  const [confirmingBlueprint, setConfirmingBlueprint] = useState<typeof blueprints[0] | null>(null);
 
   const blueprints = [
     { 
@@ -58,6 +59,7 @@ export default function MarketPage() {
   const deployBlueprint = async (blueprint: typeof blueprints[0]) => {
     if (!address) return;
     setDeploying(blueprint.id);
+    setConfirmingBlueprint(null);
     
     try {
       const res = await fetch('/api/rules', {
@@ -85,6 +87,52 @@ export default function MarketPage() {
 
   return (
     <div className="space-y-8 md:space-y-12">
+      {/* Confirmation Modal */}
+      {confirmingBlueprint && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-[#08090d] border border-mint/30 p-8 space-y-6 shadow-glow relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-mint/20">
+              <div className="h-full bg-mint animate-progress w-full"></div>
+            </div>
+            
+            <div className="space-y-2 text-center">
+              <h4 className="text-lg font-bold text-white uppercase tracking-tighter">Confirm Deployment</h4>
+              <p className="text-[10px] font-mono text-[#4a4b52] uppercase">Strategy: <span className="text-mint">{confirmingBlueprint.name}</span></p>
+            </div>
+
+            <div className="p-4 bg-black border border-[#1c1d24] space-y-3">
+              <div className="flex justify-between text-[8px] font-mono text-[#4a4b52] uppercase">
+                <span>Network</span>
+                <span className="text-white">{confirmingBlueprint.config.chain}</span>
+              </div>
+              <div className="flex justify-between text-[8px] font-mono text-[#4a4b52] uppercase">
+                <span>Trigger</span>
+                <span className="text-white">{confirmingBlueprint.config.triggerType}</span>
+              </div>
+              <div className="flex justify-between text-[8px] font-mono text-[#4a4b52] uppercase">
+                <span>Risk_Profile</span>
+                <span className={confirmingBlueprint.risk === 'HIGH' ? 'text-red-500' : 'text-mint'}>{confirmingBlueprint.risk}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={() => deployBlueprint(confirmingBlueprint)}
+                className="w-full bg-mint text-black py-3 text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all"
+              >
+                INITIALIZE_SYNC
+              </button>
+              <button 
+                onClick={() => setConfirmingBlueprint(null)}
+                className="w-full border border-[#1c1d24] text-[#4a4b52] py-3 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-all"
+              >
+                ABORT_MISSION
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#1c1d24] pb-8">
          <div className="space-y-2 md:space-y-1">
            <h3 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-tighter">Strategy Market</h3>
@@ -132,7 +180,7 @@ export default function MarketPage() {
                     <div className="text-[12px] font-mono text-amber font-bold">{blueprint.performance}</div>
                  </div>
                  <button 
-                  onClick={() => deployBlueprint(blueprint)}
+                  onClick={() => setConfirmingBlueprint(blueprint)}
                   disabled={!!deploying}
                   className="flex items-center gap-2 text-[10px] font-bold text-mint hover:underline uppercase tracking-widest disabled:opacity-50"
                  >
