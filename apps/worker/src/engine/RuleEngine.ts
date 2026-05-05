@@ -255,10 +255,10 @@ export class RuleEngine {
       }
     }
 
-    fieldValues.security_score = security.securityScore;
-    fieldValues.no_mint_authority = security.noMintAuthority ? 1 : 0;
-    fieldValues.no_freeze_authority = security.noFreezeAuthority ? 1 : 0;
-    fieldValues.top_10_holder_percent = security.top10HolderPercent ?? 0;
+    fieldValues['security_score'] = security.securityScore;
+    fieldValues['no_mint_authority'] = security.noMintAuthority ? 1 : 0;
+    fieldValues['no_freeze_authority'] = security.noFreezeAuthority ? 1 : 0;
+    fieldValues['top_10_holder_percent'] = security.top10HolderPercent ?? 0;
 
     // 3. Tüm şartları tekrar kontrol et (Security dahil)
     const isMatch = rule.conditions.every((condition: RuleCondition) => {
