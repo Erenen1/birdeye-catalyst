@@ -6,7 +6,11 @@ export async function GET(request: Request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const userId = searchParams.get('userId')?.toLowerCase();
+
+    if (!userId) {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    }
 
     const rules = await RuleModel.find({ userId }).sort({ createdAt: -1 });
     return NextResponse.json(rules);
@@ -50,7 +54,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const currentCount = await RuleModel.countDocuments({ userId, isActive: true });
+    const currentCount = await RuleModel.countDocuments({ 
+      userId: userId.toLowerCase(), 
+      isActive: true 
+    });
     const limit = user.tier === 'pro' ? 50 : FREE_TIER_RULE_LIMIT;
 
     if (currentCount >= limit) {
