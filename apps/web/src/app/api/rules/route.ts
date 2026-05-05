@@ -76,6 +76,34 @@ export async function POST(request: Request) {
       isActive: true,
     });
 
+    // 4. Referral Reward Logic (Trigger on first node deployment)
+    const ruleCount = await RuleModel.countDocuments({ userId: userId.toLowerCase() });
+    if (ruleCount === 1 && user.referredBy) {
+      const rewardDays = 7;
+      const rewardMs = rewardDays * 24 * 60 * 60 * 1000;
+      
+      // Update Referrer
+      const referrer = await UserModel.findOne({ referralCode: user.referredBy });
+      if (referrer) {
+        const newProUntil = new Date(Math.max(
+          referrer.proUntil?.getTime() || Date.now(),
+          Date.now()
+        ) + rewardMs);
+        
+        await UserModel.updateOne(
+          { _id: referrer._id },
+          { $set: { proUntil: newProUntil, tier: 'pro' } }
+        );
+      }
+
+      // Update Referee (Current User)
+      const newUserProUntil = new Date(Date.now() + rewardMs);
+      await UserModel.updateOne(
+        { _id: user._id },
+        { $set: { proUntil: newUserProUntil, tier: 'pro' } }
+      );
+    }
+
     // Update user's count
     await UserModel.findOneAndUpdate(
       { walletAddress: userId.toLowerCase() },

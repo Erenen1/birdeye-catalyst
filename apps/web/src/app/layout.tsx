@@ -18,6 +18,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const ref = urlParams.get('ref');
+                if (ref) {
+                  localStorage.setItem('referral_code', ref);
+                }
+              })();
+            `,
+          }}
+        />
         <Web3Provider>
           {children}
         </Web3Provider>

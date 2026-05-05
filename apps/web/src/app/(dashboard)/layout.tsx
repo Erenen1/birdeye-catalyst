@@ -43,7 +43,9 @@ export default function DashboardLayout({
   const fetchUserStatus = useCallback(async () => {
     if (!address) return;
     try {
-      const res = await fetch(`/api/user/status?address=${address}`);
+      const storedRef = typeof window !== 'undefined' ? localStorage.getItem('referral_code') : null;
+      const url = `/api/user/status?address=${address}${storedRef ? `&ref=${storedRef}` : ''}`;
+      const res = await fetch(url);
       const data = await res.json();
       setUserStatus(data);
     } catch (error) {

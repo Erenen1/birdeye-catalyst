@@ -85,7 +85,9 @@ export default function MarketPage() {
 
   useEffect(() => {
     if (address) {
-      fetch(`/api/user/status?address=${address}`)
+      const storedRef = typeof window !== 'undefined' ? localStorage.getItem('referral_code') : null;
+      const url = `/api/user/status?address=${address}${storedRef ? `&ref=${storedRef}` : ''}`;
+      fetch(url)
         .then(res => res.json())
         .then(data => setUserStatus(data));
     }
