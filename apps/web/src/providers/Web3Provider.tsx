@@ -27,9 +27,9 @@ const config = getDefaultConfig({
   appName: 'Birdeye Catalyst',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '044601f65214832475170d743a6d45b3',
   chains: [mainnet, arbitrum, polygon, optimism, base],
-  ssr: true, 
+  ssr: true,
   transports: {
-    [mainnet.id]: http('https://eth.public-rpc.com'),
+    [mainnet.id]: http('https://cloudflare-eth.com'),
     [arbitrum.id]: http(),
     [polygon.id]: http(),
     [optimism.id]: http(),
@@ -43,7 +43,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider 
+        <RainbowKitProvider
           locale="en-US"
           theme={darkTheme({
             accentColor: '#00ff9f',
