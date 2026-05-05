@@ -1,5 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { UserModel } from '@chaintrigger/shared';
+import { UserModel, RuleModel } from '@chaintrigger/shared';
 
 export class TelegramBotService {
   private bot: TelegramBot;
@@ -19,7 +19,7 @@ export class TelegramBotService {
       if (!verificationToken) return;
 
       try {
-        const user = await UserModel.findOneAndUpdate(
+        let user = await UserModel.findOneAndUpdate(
           { telegramVerificationToken: verificationToken },
           { 
             telegramChatId: chatId,
@@ -30,7 +30,39 @@ export class TelegramBotService {
         );
 
         if (user) {
-          await this.bot.sendMessage(chatId, `✅ *Connection Successful!*\n\nYour wallet \`${user.walletAddress}\` is now linked to this Telegram account. You will receive on-chain alerts here.`, { parse_mode: 'Markdown' });
+          // Check for Referral Reward
+          const ruleCount = await RuleModel.countDocuments({ userId: user.walletAddress.toLowerCase() });
+          
+          if (ruleCount >= 1 && user.referredBy && !user.isReferralRewardClaimed) {
+            const rewardDays = 7;
+            const rewardMs = rewardDays * 24 * 60 * 60 * 1000;
+            
+            // Update Referrer
+            const referrer = await UserModel.findOne({ referralCode: user.referredBy });
+            if (referrer) {
+              const newProUntil = new Date(Math.max(
+                referrer.proUntil?.getTime() || Date.now(),
+                Date.now()
+              ) + rewardMs);
+              
+              await UserModel.updateOne(
+                { _id: referrer._id },
+                { $set: { proUntil: newProUntil, tier: 'pro' } }
+              );
+            }
+
+            // Update Referee (Current User)
+            const newUserProUntil = new Date(Date.now() + rewardMs);
+            user = await UserModel.findOneAndUpdate(
+              { _id: user._id },
+              { $set: { proUntil: newUserProUntil, tier: 'pro', isReferralRewardClaimed: true } },
+              { new: true }
+            );
+
+            await this.bot.sendMessage(chatId, `🎉 *Referral Bonus Activated!*\n\nYou and your referrer have both been granted *${rewardDays} days of PRO access*. Enjoy premium features!`, { parse_mode: 'Markdown' });
+          }
+
+          await this.bot.sendMessage(chatId, `✅ *Connection Successful!*\n\nYour wallet \`${user!.walletAddress}\` is now linked to this Telegram account. You will receive on-chain alerts here.`, { parse_mode: 'Markdown' });
         } else {
           await this.bot.sendMessage(chatId, '❌ *Invalid or expired token.*\nPlease try linking again from the dashboard.');
         }

@@ -55,6 +55,10 @@ const UserSchema = new Schema<IUserDocument>(
       type: String,
       index: true,
     },
+    isReferralRewardClaimed: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: false }, // updatedAt gerekli değil
