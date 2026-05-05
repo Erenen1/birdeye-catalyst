@@ -9,6 +9,7 @@ import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import type { IBirdeyeService } from '../interfaces/IBirdeyeService';
 import type { BirdeyeToken, BirdeyeSecurityData, BirdeyeMarketData } from '@chaintrigger/shared';
+import { logger } from '@chaintrigger/shared';
 
 const BASE_URL = 'https://public-api.birdeye.so';
 const CACHE_TTL_SECONDS = 30; // Birdeye rate-limit koruması
