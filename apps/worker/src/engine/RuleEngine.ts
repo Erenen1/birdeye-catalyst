@@ -94,6 +94,22 @@ export class RuleEngine {
     if (allMatches.length === 0) return;
 
     try {
+      // Enrichment: Tüm eksik logoları TEK BİR Batch API isteği ile tamamla
+      const addressesMissingLogo = [...new Set(allMatches
+        .filter(m => !m.token.logoURI)
+        .map(m => m.token.address))];
+
+      if (addressesMissingLogo.length > 0) {
+        // Not: Tüm sinyallerin aynı chain'den olduğunu varsayıyoruz (chain bazlı ticklendiği için)
+        const metaMap = await this.birdeyeService.getMultipleTokenMetadata(addressesMissingLogo, allMatches[0].rule.chain);
+        
+        for (const m of allMatches) {
+          if (!m.token.logoURI && metaMap[m.token.address]?.logoURI) {
+            m.token.logoURI = metaMap[m.token.address].logoURI;
+          }
+        }
+      }
+
       // 1. Bulk Insert to MongoDB (Feed ekranı için)
       const alertDocs = allMatches.map(m => ({
         ruleId: m.rule._id,

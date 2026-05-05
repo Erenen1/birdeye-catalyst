@@ -12,6 +12,7 @@ import type { BirdeyeToken, BirdeyeSecurityData, BirdeyeMarketData } from '@chai
 
 const BASE_URL = 'https://public-api.birdeye.so';
 const CACHE_TTL_SECONDS = 30; // Birdeye rate-limit koruması
+const METADATA_TTL = 86400; // 24 saat (Logo değişmez pek)
 
 export class BirdeyeService implements IBirdeyeService {
   private readonly client;
@@ -125,5 +126,49 @@ export class BirdeyeService implements IBirdeyeService {
 
     await this.redisClient.setEx(cacheKey, 60, JSON.stringify(result));
     return result;
+  }
+
+  async getMultipleTokenMetadata(addresses: string[], chain: string = 'solana'): Promise<Record<string, { logoURI?: string }>> {
+    if (addresses.length === 0) return {};
+    
+    const results: Record<string, { logoURI?: string }> = {};
+    const missingInCache: string[] = [];
+
+    // 1. Try to get from Redis Cache first
+    for (const addr of addresses) {
+      const cacheKey = `birdeye:metadata:${chain}:${addr}`;
+      const cached = await this.redisClient.get(cacheKey);
+      if (cached) {
+        results[addr] = JSON.parse(cached);
+      } else {
+        missingInCache.push(addr);
+      }
+    }
+
+    if (missingInCache.length === 0) return results;
+
+    // 2. Fetch missing ones in a SINGLE Batch API call
+    try {
+      const { data } = await this.client.get('/defi/v3/token/meta-data/multiple', {
+        params: { addresses: missingInCache.join(',') },
+        headers: { 'x-chain': chain }
+      });
+
+      // Birdeye returns an object with addresses as keys
+      const metaDataMap = data.data || {};
+      
+      for (const addr of missingInCache) {
+        const logoURI = metaDataMap[addr]?.logo_uri || metaDataMap[addr]?.logoURI;
+        const meta = { logoURI };
+        results[addr] = meta;
+        
+        // Cache globally for 24 hours
+        await this.redisClient.setEx(`birdeye:metadata:${chain}:${addr}`, METADATA_TTL, JSON.stringify(meta));
+      }
+    } catch (error) {
+      logger.error(`Batch metadata fetch failed for ${missingInCache.length} tokens`, 'BirdeyeService', error);
+    }
+
+    return results;
   }
 }

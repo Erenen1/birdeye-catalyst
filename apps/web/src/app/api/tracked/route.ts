@@ -11,6 +11,33 @@ export async function GET(req: NextRequest) {
   try {
     await dbConnect();
     const tracked = await TrackedTokenModel.find({ userId }).sort({ createdAt: -1 });
+    
+    // Self-Healing Logic: Repair legacy entries missing logos (Optimized Batch)
+    const missingLogos = tracked.filter(t => !t.logoURI);
+    if (missingLogos.length > 0) {
+      const addresses = missingLogos.map(t => t.tokenAddress);
+      try {
+        const res = await fetch(`https://public-api.birdeye.so/defi/v3/token/meta-data/multiple?addresses=${addresses.join(',')}`, {
+          headers: {
+            'X-API-KEY': process.env.BIRDEYE_API_KEY || '',
+            'x-chain': missingLogos[0].chain
+          }
+        });
+        const data = await res.json();
+        const metaMap = data.data || {};
+
+        for (const token of missingLogos) {
+          const logo = metaMap[token.tokenAddress]?.logo_uri || metaMap[token.tokenAddress]?.logoURI;
+          if (logo) {
+            token.logoURI = logo;
+            await TrackedTokenModel.updateOne({ _id: token._id }, { logoURI: logo });
+          }
+        }
+      } catch (e) {
+        console.error(`Batch repair failed for ${addresses.length} tokens`, e);
+      }
+    }
+
     return NextResponse.json(tracked);
   } catch (error) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

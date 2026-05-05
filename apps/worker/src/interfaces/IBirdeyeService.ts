@@ -27,4 +27,5 @@ export interface IBirdeyeService {
    * /defi/v3/token/market-data endpoint'inden pazar verisi getirir.
    */
   getMarketData(address: string, chain?: string): Promise<BirdeyeMarketData>;
+  getMultipleTokenMetadata(addresses: string[], chain?: string): Promise<Record<string, { logoURI?: string }>>;
 }
