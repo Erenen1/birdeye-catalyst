@@ -14,7 +14,9 @@ export class TelegramBotService {
     this.bot.onText(/\/start (.+)/, async (msg, match) => {
       const chatId = msg.chat.id.toString();
       const verificationToken = match?.[1];
-      const username = msg.from?.username || msg.from?.first_name || 'User';
+      const username = msg.from?.username 
+        ? msg.from.username 
+        : `${msg.from?.first_name || ''} ${msg.from?.last_name || ''}`.trim() || 'Anonymous';
 
       if (!verificationToken) return;
 

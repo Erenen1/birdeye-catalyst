@@ -44,6 +44,8 @@ export default function RuleForm({ userId, onClose, onSuccess }: RuleFormProps) 
 
   // Fetch and poll for telegram status
   useEffect(() => {
+    let interval: NodeJS.Timeout;
+
     const checkStatus = async () => {
       try {
         // Fetch User Status (Tier, Telegram etc)
@@ -52,6 +54,7 @@ export default function RuleForm({ userId, onClose, onSuccess }: RuleFormProps) 
         setTelegramStatus(statusData);
         if (statusData.isConnected) {
           setChatId(statusData.telegramChatId);
+          if (interval) clearInterval(interval);
         }
 
         // Fetch Current Rule Count
@@ -66,7 +69,7 @@ export default function RuleForm({ userId, onClose, onSuccess }: RuleFormProps) 
     };
 
     checkStatus();
-    const interval = setInterval(checkStatus, 5000);
+    interval = setInterval(checkStatus, 5000);
 
     return () => clearInterval(interval);
   }, [userId]);
