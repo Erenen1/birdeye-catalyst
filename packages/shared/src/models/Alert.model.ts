@@ -15,6 +15,7 @@ const AlertSchema = new Schema<IAlertDocument>(
       liquidity: { type: Number },
       volume24h: { type: Number },
       priceChange24h: { type: Number },
+      logoURI: { type: String },
     },
     security: {
       address: { type: String },
