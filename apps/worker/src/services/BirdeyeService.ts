@@ -56,6 +56,7 @@ export class BirdeyeService implements IBirdeyeService {
       liquidity: t.liquidity || 0,
       volume24h: t.volume24hUSD || t.v24hUSD || 0,
       priceChange24h: t.price24hChangePercent || t.v24hChangePercent || 0,
+      logoURI: t.logo_uri || t.logoURI,
     }));
     await this.redisClient.setEx(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(tokens));
     return tokens;
@@ -79,6 +80,7 @@ export class BirdeyeService implements IBirdeyeService {
       liquidity: t.liquidity || 0,
       volume24h: t.volume24hUSD || t.v24hUSD || 0,
       priceChange24h: t.price24hChangePercent || t.v24hChangePercent || 0,
+      logoURI: t.logo_uri || t.logoURI,
     }));
     await this.redisClient.setEx(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(tokens));
     return tokens;

@@ -119,6 +119,7 @@ export default function LandingPage() {
         score: a.security?.securityScore != null ? `${a.security.securityScore}/100` : 'N/A',
         status: 'MATCH',
         triggerType: a.triggerType ?? type,
+        logoURI: a.token?.logoURI,
       }));
   };
 
@@ -260,26 +261,33 @@ export default function LandingPage() {
                <span className="text-right">Action</span>
             </div>
             <div className="divide-y divide-[#1c1d24]">
-               {getRadarData(activeRadarTab).length > 0 ? (
-                 getRadarData(activeRadarTab).map((row, i) => (
-                    <div key={i} className="grid grid-cols-5 px-6 py-4 items-center animate-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
-                       <span className="text-[10px] font-mono text-[#4a4b52]">{row.time}</span>
-                       <div className="col-span-2 flex items-center gap-3">
-                          <div className={`w-1.5 h-1.5 rounded-full ${row.status === 'IGNORE' ? 'bg-red-500' : 'bg-mint'} animate-pulse`}></div>
-                          <span className="text-[11px] font-bold text-white font-mono">{row.name}</span>
-                          {row.network && <span className="text-[8px] px-1 border border-[#1c1d24] text-[#4a4b52]">{row.network}</span>}
-                       </div>
-                       <span className="text-[10px] font-mono text-mint">
-                          {row.liq}
-                       </span>
-                       <div className="text-right">
-                          <span className={`text-[9px] font-bold font-mono px-2 py-0.5 border ${row.status === 'IGNORE' ? 'border-red-500/20 text-red-500' : 'border-mint/20 text-mint uppercase'}`}>
-                             {row.status}
-                          </span>
-                       </div>
-                    </div>
-                 ))
-               ) : (
+                {getRadarData(activeRadarTab).length > 0 ? (
+                  getRadarData(activeRadarTab).map((row, i) => (
+                     <div key={i} className="grid grid-cols-5 px-6 py-4 items-center animate-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
+                        <span className="text-[10px] font-mono text-[#4a4b52]">{row.time}</span>
+                        <div className="col-span-2 flex items-center gap-3">
+                           <div className={`w-1.5 h-1.5 rounded-full ${row.status === 'IGNORE' ? 'bg-red-500' : 'bg-mint'} animate-pulse shrink-0`}></div>
+                           <div className="w-5 h-5 border border-[#1c1d24] flex items-center justify-center bg-[#0c0d12] text-mint font-bold text-[8px] shrink-0 overflow-hidden">
+                             {row.logoURI ? (
+                               <img src={row.logoURI} alt={row.name} className="w-full h-full object-cover" />
+                             ) : (
+                               (row.name || '?')[0]
+                             )}
+                           </div>
+                           <span className="text-[11px] font-bold text-white font-mono">{row.name}</span>
+                           {row.network && <span className="text-[8px] px-1 border border-[#1c1d24] text-[#4a4b52]">{row.network}</span>}
+                        </div>
+                        <span className="text-[10px] font-mono text-mint">
+                           {row.liq}
+                        </span>
+                        <div className="text-right">
+                           <span className={`text-[9px] font-bold font-mono px-2 py-0.5 border ${row.status === 'IGNORE' ? 'border-red-500/20 text-red-500' : 'border-mint/20 text-mint uppercase'}`}>
+                              {row.status}
+                           </span>
+                        </div>
+                     </div>
+                  ))
+                ) : (
                  <div className="px-6 py-12 text-center">
                     <span className="text-[10px] font-mono text-[#4a4b52] uppercase tracking-[0.2em]">No_live_signals_detected_in_this_sector</span>
                  </div>

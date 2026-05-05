@@ -81,6 +81,7 @@ export interface BirdeyeToken {
   liquidity: number;
   volume24h: number;
   priceChange24h: number;
+  logoURI?: string;
 }
 
 export interface BirdeyeSecurityData {
@@ -136,6 +137,7 @@ export interface ITrackedToken {
   tokenAddress: string;
   symbol: string;
   name: string;
+  logoURI?: string;
   entryPrice: number;
   entryLiquidity: number;
   chain: string;

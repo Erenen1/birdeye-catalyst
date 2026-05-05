@@ -9,6 +9,7 @@ const TrackedTokenSchema = new Schema<ITrackedTokenDocument>(
     tokenAddress: { type: String, required: true },
     symbol: { type: String, required: true },
     name: { type: String, required: true },
+    logoURI: { type: String },
     entryPrice: { type: Number, required: true },
     entryLiquidity: { type: Number, required: true },
     chain: { type: String, required: true },

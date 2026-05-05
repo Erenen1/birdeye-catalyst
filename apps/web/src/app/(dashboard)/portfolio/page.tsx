@@ -142,8 +142,12 @@ export default function PortfolioPage() {
                       <tr key={token._id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="p-5">
                           <div className="flex items-center gap-4">
-                            <div className="w-8 h-8 bg-black border border-[#1c1d24] flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                              {(token.symbol || '?')[0]}
+                            <div className="w-8 h-8 bg-black border border-[#1c1d24] flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden">
+                              {token.logoURI ? (
+                                <img src={token.logoURI} alt={token.symbol} className="w-full h-full object-cover" />
+                              ) : (
+                                (token.symbol || '?')[0]
+                              )}
                             </div>
                             <div>
                               <div className="text-[12px] font-bold text-white uppercase">{token.name}</div>
@@ -212,8 +216,12 @@ export default function PortfolioPage() {
                     <div key={token._id} className="bg-[#08090d] border border-[#1c1d24] p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-black border border-[#1c1d24] flex items-center justify-center text-white text-[10px] font-bold">
-                            {(token.symbol || '?')[0]}
+                          <div className="w-8 h-8 bg-black border border-[#1c1d24] flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
+                            {token.logoURI ? (
+                              <img src={token.logoURI} alt={token.symbol} className="w-full h-full object-cover" />
+                            ) : (
+                              (token.symbol || '?')[0]
+                            )}
                           </div>
                           <div>
                             <div className="text-[11px] font-bold text-white uppercase">{token.name}</div>
