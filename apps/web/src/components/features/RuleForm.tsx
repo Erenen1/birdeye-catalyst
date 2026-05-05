@@ -139,7 +139,7 @@ export default function RuleForm({ userId, onClose, onSuccess }: RuleFormProps) 
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-background/95 backdrop-blur-md overflow-hidden"
+      className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-md overflow-hidden"
       onClick={onClose}
     >
       <div 

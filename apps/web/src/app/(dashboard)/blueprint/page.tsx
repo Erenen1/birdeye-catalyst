@@ -151,7 +151,7 @@ export default function MarketPage() {
     <div className="space-y-8 md:space-y-12">
       {/* Confirmation Modal */}
       {confirmingBlueprint && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-[#08090d] border border-mint/30 p-8 space-y-6 shadow-glow relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-mint/20">
               <div className="h-full bg-mint animate-progress w-full"></div>
@@ -209,7 +209,7 @@ export default function MarketPage() {
 
       {/* Pro Upgrade Modal */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-[#08090d] border border-amber/30 p-8 space-y-6 shadow-amber-glow relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-amber/20">
               <div className="h-full bg-amber animate-progress w-full"></div>

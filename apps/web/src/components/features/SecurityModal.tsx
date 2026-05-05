@@ -50,7 +50,7 @@ export default function SecurityModal({ tokenName, tokenSymbol, data, onClose }:
   );
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200 overflow-hidden">
       <div className="w-full max-w-md h-full md:h-auto bg-[#08090d] border-t md:border border-[#1c1d24] p-6 md:p-8 relative overflow-y-auto">
         {/* Background Glow */}
         <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-[80px] ${data.securityScore > 70 ? 'bg-mint/20' : 'bg-red-500/20'}`}></div>
