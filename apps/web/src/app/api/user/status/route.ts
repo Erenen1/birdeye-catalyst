@@ -18,10 +18,9 @@ export async function GET(request: Request) {
     let user = await UserModel.findOne({ walletAddress: address.toLowerCase() });
     
     if (!user) {
-      // Generate unique referral code
+      // Generate unique referral code for NEW user
       const myRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       
-      // Create user if not exists
       user = await UserModel.create({
         walletAddress: address.toLowerCase(),
         tier: 'free',
@@ -29,6 +28,11 @@ export async function GET(request: Request) {
         referralCode: myRefCode,
         referredBy: refCode || undefined
       });
+    } else if (!user.referralCode) {
+      // Generate unique referral code for EXISTING (legacy) user
+      const myRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      user.referralCode = myRefCode;
+      await user.save();
     }
 
     return NextResponse.json({
