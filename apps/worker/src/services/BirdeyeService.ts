@@ -43,12 +43,20 @@ export class BirdeyeService implements IBirdeyeService {
     const cached = await this.redisClient.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
-    const { data } = await this.client.get('/v2/tokens/new_listing', {
+    const { data } = await this.client.get('/defi/v2/tokens/new_listing', {
       params: { limit: 20 },
       headers: { 'x-chain': chain }
     });
 
-    const tokens: BirdeyeToken[] = data.data?.items ?? [];
+    const rawTokens = data.data?.items ?? [];
+    const tokens: BirdeyeToken[] = rawTokens.map((t: any) => ({
+      address: t.address,
+      symbol: t.symbol,
+      name: t.name,
+      liquidity: t.liquidity || 0,
+      volume24h: t.volume24hUSD || t.v24hUSD || 0,
+      priceChange24h: t.v24hChangePercent || 0,
+    }));
     await this.redisClient.setEx(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(tokens));
     return tokens;
   }
@@ -63,7 +71,15 @@ export class BirdeyeService implements IBirdeyeService {
       headers: { 'x-chain': chain }
     });
 
-    const tokens: BirdeyeToken[] = data.data?.tokens ?? [];
+    const rawTokens = data.data?.tokens ?? [];
+    const tokens: BirdeyeToken[] = rawTokens.map((t: any) => ({
+      address: t.address,
+      symbol: t.symbol,
+      name: t.name,
+      liquidity: t.liquidity || 0,
+      volume24h: t.volume24hUSD || t.v24hUSD || 0,
+      priceChange24h: t.v24hChangePercent || 0,
+    }));
     await this.redisClient.setEx(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(tokens));
     return tokens;
   }
