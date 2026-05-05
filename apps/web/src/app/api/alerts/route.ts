@@ -9,29 +9,37 @@ export async function GET(req: NextRequest) {
   const userId = searchParams.get('userId');
   const ip = req.headers.get('x-forwarded-for') || 'anonymous';
 
-  // 1. Rate Limiting (Item 2)
-  const { success } = await rateLimit(`alerts:${ip}`, 60, 60); // 60 requests per minute
+  const { success } = await rateLimit(`alerts:${ip}`, 60, 60);
   if (!success) {
     return NextResponse.json({ error: 'Too Many Requests' }, { status: 429 });
   }
 
   try {
     const redis = await getRedisClient();
+
+    // GLOBAL feed → RuleEngine pushes to 'alerts:user:GLOBAL' in Redis
+    // User feed   → RuleEngine pushes to 'alerts:user:<walletAddress>'
     const cacheKey = `alerts:user:${userId}`;
-    
-    // 1. Try Redis Cache first
-    const cachedAlerts = await redis.lRange(cacheKey, 0, 19);
-    
+    const cachedAlerts = await redis.lRange(cacheKey, 0, 49);
+
     if (cachedAlerts && cachedAlerts.length > 0) {
       return NextResponse.json(cachedAlerts.map((a: string) => JSON.parse(a)));
     }
 
-    // 2. Fallback to MongoDB
+    // Cold-cache fallback: hit MongoDB
     await dbConnect();
-    const query = userId === 'GLOBAL' ? {} : { userId };
-    const alerts = await AlertModel.find(query)
-      .sort({ createdAt: -1 })
-      .limit(20);
+
+    let alerts;
+    if (userId === 'GLOBAL') {
+      // Return the latest alerts from ANY user — this is the public feed
+      alerts = await AlertModel.find({})
+        .sort({ createdAt: -1 })
+        .limit(50);
+    } else {
+      alerts = await AlertModel.find({ userId })
+        .sort({ createdAt: -1 })
+        .limit(20);
+    }
 
     return NextResponse.json(alerts);
   } catch (error) {
@@ -39,3 +47,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+

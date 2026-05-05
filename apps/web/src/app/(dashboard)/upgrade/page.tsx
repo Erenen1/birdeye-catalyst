@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Crown, Zap, Shield, Check, Copy, Gift, Users, ArrowUpRight, Lock, Activity, Globe, Cpu } from 'lucide-react';
-import { LoopSubscriptionManager } from '@/components/subscription/LoopSubscriptionManager';
+import { SphereCheckoutButton } from '@/components/subscription/SphereCheckoutButton';
 import { cn } from '@/lib/utils';
+
 
 export default function UpgradePage() {
   const { address } = useAccount();
@@ -154,7 +155,17 @@ export default function UpgradePage() {
             </div>
 
             <div className="space-y-4">
-              <LoopSubscriptionManager planPrice={29} planName="Catalyst Pro" />
+              {isPro ? (
+                <div className="w-full py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] bg-mint/5 text-mint border border-mint/30">
+                  ✓ CATALYST_PRO_ACTIVE
+                </div>
+              ) : (
+                <SphereCheckoutButton
+                  walletAddress={address ?? ''}
+                  label="UPGRADE_TO_PRO — $29 USDC/MO"
+                  className="bg-mint text-black hover:bg-mint/90 shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:shadow-[0_0_40px_rgba(34,197,94,0.5)]"
+                />
+              )}
             </div>
           </div>
         </div>

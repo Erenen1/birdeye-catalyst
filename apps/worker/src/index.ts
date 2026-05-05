@@ -15,10 +15,11 @@ import { CustomWebhookProvider } from './dispatchers/providers/CustomWebhookProv
 import { NotificationDispatcher } from './dispatchers/NotificationDispatcher';
 import { TelegramBotService } from './services/TelegramBotService';
 import { GlobalWatcherService } from './services/GlobalWatcherService';
-import { LoopWorker } from './queue/LoopWorker';
+import { SphereWorker } from './queue/SphereWorker';
 import type { NotificationJobPayload } from '@chaintrigger/shared';
 
 const QUEUE_NAME = 'notifications';
+
 
 async function bootstrap() {
   console.log('🚀 Birdeye Catalyst Worker başlatılıyor...');
@@ -84,11 +85,11 @@ async function bootstrap() {
   // 4. Telegram Bot Service (For deep-linking /start)
   const telegramBotService = new TelegramBotService(finalTelegramToken);
 
-  // 5. LoopWorker (For processing Loop webhook events)
-  const loopWorker = new LoopWorker(redisHost, redisPort);
-
+  // 5. SphereWorker (Sphere webhook event'lerini işler)
+  const sphereWorker = new SphereWorker(redisHost, redisPort);
 
   console.log('⚙️ Worker Engine aktif. Global Watcher başlatılıyor...');
+
 
   // 4. Global Watcher Döngüleri (Polling)
   await globalWatcher.start();
@@ -99,7 +100,8 @@ async function bootstrap() {
     await globalWatcher.stopAll();
     await telegramBotService.stop();
     await dispatcher.close();
-    await loopWorker.close();
+    await sphereWorker.close();
+
     await redisClient.disconnect();
     await mongoose.disconnect();
     process.exit(0);

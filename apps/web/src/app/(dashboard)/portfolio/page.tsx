@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import { Terminal, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Info, BarChart2 } from 'lucide-react';
 
 export default function PortfolioPage() {
   const { address, isConnected } = useAccount();
@@ -17,17 +17,19 @@ export default function PortfolioPage() {
       const data = await res.json();
       if (Array.isArray(data)) {
         setTrackedTokens(data);
-        // Fetch current prices for all tracked tokens
-        data.forEach(async (token) => {
-          const pRes = await fetch(`/api/tokens/price?address=${token.tokenAddress}&chain=${token.chain}`);
-          const pData = await pRes.json();
-          if (pData?.value) {
-            setCurrentPrices(prev => ({ ...prev, [token.tokenAddress]: pData.value }));
-          }
-        });
+        // Fetch live prices for all tracked tokens
+        await Promise.allSettled(
+          data.map(async (token) => {
+            const pRes = await fetch(`/api/tokens/price?address=${token.tokenAddress}&chain=${token.chain}`);
+            const pData = await pRes.json();
+            if (pData?.value != null) {
+              setCurrentPrices((prev) => ({ ...prev, [token.tokenAddress]: pData.value }));
+            }
+          })
+        );
       }
-    } catch (error) {
-      console.error('Error fetching tracked:', error);
+    } catch (err) {
+      console.error('[Portfolio] Fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -37,160 +39,252 @@ export default function PortfolioPage() {
     if (isConnected) fetchTracked();
   }, [isConnected, fetchTracked]);
 
-  const calculatePnL = (entry: number, current: number) => {
-    if (!entry || !current) return 0;
+  // ── Real calculations ────────────────────────────────────────────────────────
+
+  const calcPnL = (entry: number, current: number) => {
+    if (!entry || !current || entry === 0) return 0;
     return ((current - entry) / entry) * 100;
   };
 
-  const totalPnL = trackedTokens.reduce((acc, token) => {
-    const current = currentPrices[token.tokenAddress] || token.entryPrice;
-    return acc + calculatePnL(token.entryPrice, current);
-  }, 0) / (trackedTokens.length || 1);
+  const pnlValues = trackedTokens.map((t) =>
+    calcPnL(t.entryPrice, currentPrices[t.tokenAddress] ?? t.entryPrice)
+  );
+
+  const avgPnL      = pnlValues.length > 0 ? pnlValues.reduce((a, b) => a + b, 0) / pnlValues.length : 0;
+  const winningCount = pnlValues.filter((v) => v > 0).length;
+  const losingCount  = pnlValues.filter((v) => v < 0).length;
+  const winRate      = pnlValues.length > 0 ? (winningCount / pnlValues.length) * 100 : 0;
+  const highestROI   = pnlValues.length > 0 ? Math.max(...pnlValues) : 0;
+  const lowestROI    = pnlValues.length > 0 ? Math.min(...pnlValues) : 0;
+
+  const pnlColor = (v: number) => (v >= 0 ? 'text-mint' : 'text-red-500');
 
   return (
     <div className="space-y-8 md:space-y-12">
+
+      {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#1c1d24] pb-8">
-         <div className="space-y-2 md:space-y-1">
-           <h3 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-tighter">Performance Monitor</h3>
-           <p className="text-[10px] md:text-[11px] font-mono text-[#4a4b52] max-w-md">Simulated PnL tracking for detected alpha opportunities in real-time.</p>
-         </div>
-         <div className="flex items-center justify-between md:justify-end gap-6 border md:border-none border-[#1c1d24] p-4 md:p-0 bg-[#08090d] md:bg-transparent">
-            <div className="text-left md:text-right">
-               <div className="text-[8px] font-mono text-[#4a4b52] uppercase tracking-widest">Avg_PnL</div>
-               <div className={`text-xl md:text-2xl font-bold font-mono ${totalPnL >= 0 ? 'text-mint' : 'text-red-500'}`}>
-                  {totalPnL >= 0 ? '+' : ''}{totalPnL.toFixed(2)}%
-               </div>
+        <div className="space-y-1">
+          <h3 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-tighter">Performance Monitor</h3>
+          <p className="text-[11px] font-mono text-[#4a4b52] max-w-lg leading-relaxed">
+            Simulated PnL tracking for detected alpha opportunities. Entry price is captured at detection time;
+            current price is pulled live from Birdeye Oracle.
+          </p>
+        </div>
+        {/* Avg PnL */}
+        <div className="flex items-center justify-between md:justify-end gap-6 border md:border-none border-[#1c1d24] p-4 md:p-0 bg-[#08090d] md:bg-transparent">
+          <div className="text-left md:text-right">
+            <div className="text-[8px] font-mono text-[#4a4b52] uppercase tracking-widest mb-0.5">Avg_PnL</div>
+            <div className={`text-xl md:text-2xl font-bold font-mono ${pnlColor(avgPnL)}`}>
+              {avgPnL >= 0 ? '+' : ''}{avgPnL.toFixed(2)}%
             </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 border border-[#1c1d24] flex items-center justify-center text-mint bg-mint/5">
-               <TrendingUp size={20} className="md:w-6 md:h-6" />
-            </div>
-         </div>
+            <div className="text-[7px] font-mono text-[#4a4b52] mt-0.5">Across all tracked positions</div>
+          </div>
+          <div className={`w-10 h-10 md:w-12 md:h-12 border border-[#1c1d24] flex items-center justify-center ${avgPnL >= 0 ? 'text-mint bg-mint/5' : 'text-red-500 bg-red-500/5'}`}>
+            {avgPnL >= 0 ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-         <div className="lg:col-span-3">
-            <div className="md:border border-[#1c1d24] md:bg-[#08090d] overflow-hidden">
-               {/* Desktop Table View */}
-               <table className="hidden md:table w-full text-left border-collapse">
-                  <thead>
-                     <tr className="bg-[#0c0d12] border-b border-[#1c1d24]">
-                        <th className="p-5 text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest">Asset_Identifier</th>
-                        <th className="p-5 text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest">Entry_Node</th>
-                        <th className="p-5 text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest text-right">Performance</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#1c1d24]">
-                     {loading ? (
-                        <tr><td colSpan={3} className="p-20 text-center animate-pulse text-[#4a4b52] font-mono text-[10px]">Loading_Positions...</td></tr>
-                     ) : trackedTokens.length > 0 ? trackedTokens.map((token) => (
-                       <tr key={token._id} className="hover:bg-white/[0.02] transition-colors group">
-                          <td className="p-5">
-                             <div className="flex items-center gap-4">
-                                <div className="w-8 h-8 bg-black border border-[#1c1d24] flex items-center justify-center text-white text-[10px] font-bold">
-                                   {token.symbol[0]}
-                                </div>
-                                <div className="flex flex-col">
-                                   <span className="text-[12px] font-bold text-white uppercase">{token.name}</span>
-                                   <span className="text-[8px] font-mono text-[#4a4b52] uppercase">{token.symbol} • {token.chain.toUpperCase()}</span>
-                                </div>
-                             </div>
-                          </td>
-                          <td className="p-5">
-                             <div className="flex flex-col">
-                                <span className="text-[10px] font-mono text-[#a4a5ab]">${token.entryPrice.toFixed(8)}</span>
-                                <span className="text-[7px] font-mono text-[#4a4b52] uppercase">Detected: {new Date(token.createdAt).toLocaleDateString()}</span>
-                             </div>
-                          </td>
-                          <td className="p-5 text-right">
-                             <div className="flex flex-col items-end">
-                                <span className={`text-[11px] font-mono font-bold ${calculatePnL(token.entryPrice, currentPrices[token.tokenAddress] || token.entryPrice) >= 0 ? 'text-mint' : 'text-red-500'}`}>
-                                   {calculatePnL(token.entryPrice, currentPrices[token.tokenAddress] || token.entryPrice).toFixed(2)}%
-                                </span>
-                                <span className="text-[8px] font-mono text-[#4a4b52] uppercase">Price: ${(currentPrices[token.tokenAddress] || token.entryPrice).toFixed(8)}</span>
-                             </div>
-                          </td>
-                       </tr>
-                     )) : (
-                       <tr>
-                          <td colSpan={3} className="p-20 text-center text-[#4a4b52] uppercase text-[9px] font-mono tracking-widest">
-                             No alpha positions detected yet.
-                          </td>
-                       </tr>
-                     )}
-                  </tbody>
-               </table>
 
-               {/* Mobile Card View */}
-               <div className="md:hidden space-y-4">
-                  {loading ? (
-                    <div className="p-10 text-center animate-pulse text-[#4a4b52] font-mono text-[10px]">Loading_Positions...</div>
-                  ) : trackedTokens.length > 0 ? trackedTokens.map((token) => (
-                    <div key={token._id} className="pixel-card bg-[#08090d] border border-[#1c1d24] p-4 flex flex-col gap-4">
-                       <div className="flex items-center justify-between border-b border-[#1c1d24] pb-3">
-                          <div className="flex items-center gap-3">
-                             <div className="w-8 h-8 bg-black border border-[#1c1d24] flex items-center justify-center text-white text-[10px] font-bold">
-                                {token.symbol[0]}
-                             </div>
-                             <div className="flex flex-col">
-                                <span className="text-[11px] font-bold text-white uppercase">{token.name}</span>
-                                <span className="text-[8px] font-mono text-[#4a4b52] uppercase">{token.symbol} • {token.chain.toUpperCase()}</span>
-                             </div>
+        {/* ── Positions Table ── */}
+        <div className="lg:col-span-3">
+          <div className="md:border border-[#1c1d24] md:bg-[#08090d] overflow-hidden">
+
+            {/* Desktop */}
+            <table className="hidden md:table w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#0c0d12] border-b border-[#1c1d24]">
+                  <th className="p-5 text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest">Asset</th>
+                  <th className="p-5 text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest">
+                    Entry Price
+                    <span className="ml-1 text-[7px] normal-case text-[#2a2b32]">at detection time</span>
+                  </th>
+                  <th className="p-5 text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest">
+                    Current Price
+                    <span className="ml-1 text-[7px] normal-case text-[#2a2b32]">Birdeye Oracle</span>
+                  </th>
+                  <th className="p-5 text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest text-right">
+                    PnL
+                    <span className="ml-1 text-[7px] normal-case text-[#2a2b32]">simulated</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1c1d24]">
+                {loading ? (
+                  <tr><td colSpan={4} className="p-20 text-center animate-pulse text-[#4a4b52] font-mono text-[10px]">Loading_Positions...</td></tr>
+                ) : trackedTokens.length > 0 ? (
+                  trackedTokens.map((token) => {
+                    const current  = currentPrices[token.tokenAddress] ?? token.entryPrice;
+                    const pnl      = calcPnL(token.entryPrice, current);
+                    const hasPrice = currentPrices[token.tokenAddress] != null;
+                    return (
+                      <tr key={token._id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="p-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-8 h-8 bg-black border border-[#1c1d24] flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                              {(token.symbol || '?')[0]}
+                            </div>
+                            <div>
+                              <div className="text-[12px] font-bold text-white uppercase">{token.name}</div>
+                              <div className="text-[8px] font-mono text-[#4a4b52] uppercase">{token.symbol} · {token.chain?.toUpperCase()}</div>
+                              <div className="text-[7px] font-mono text-[#2a2b32] mt-0.5">
+                                Detected: {new Date(token.createdAt).toLocaleDateString('en-US')}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-right">
-                             <span className={`text-[12px] font-mono font-bold ${calculatePnL(token.entryPrice, currentPrices[token.tokenAddress] || token.entryPrice) >= 0 ? 'text-mint' : 'text-red-500'}`}>
-                                {calculatePnL(token.entryPrice, currentPrices[token.tokenAddress] || token.entryPrice).toFixed(2)}%
-                             </span>
+                        </td>
+                        <td className="p-5">
+                          <div className="text-[10px] font-mono text-[#a4a5ab]">
+                            {token.entryPrice > 0 ? `$${token.entryPrice.toFixed(8)}` : '—'}
                           </div>
-                       </div>
-                       <div className="grid grid-cols-2 gap-4">
+                          {token.entryPrice === 0 && (
+                            <div className="text-[7px] font-mono text-[#4a4b52] mt-0.5">No price at detection</div>
+                          )}
+                        </td>
+                        <td className="p-5">
+                          <div className="text-[10px] font-mono text-white">
+                            {current > 0 ? `$${current.toFixed(8)}` : '—'}
+                          </div>
+                          <div className="text-[7px] font-mono text-[#4a4b52] mt-0.5">
+                            {hasPrice ? 'Live' : 'Fetching...'}
+                          </div>
+                        </td>
+                        <td className="p-5 text-right">
+                          <div className={`text-[11px] font-mono font-bold ${pnlColor(pnl)}`}>
+                            {pnl >= 0 ? '+' : ''}{pnl.toFixed(2)}%
+                          </div>
+                          {!hasPrice && (
+                            <div className="text-[7px] font-mono text-[#4a4b52]">Awaiting price</div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="p-20 text-center text-[#4a4b52] uppercase text-[9px] font-mono tracking-widest">
+                      No positions tracked yet. Go to the Terminal and hit TRACK on a signal.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-4">
+              {loading ? (
+                <div className="p-10 text-center animate-pulse text-[#4a4b52] font-mono text-[10px]">Loading...</div>
+              ) : trackedTokens.length > 0 ? (
+                trackedTokens.map((token) => {
+                  const current = currentPrices[token.tokenAddress] ?? token.entryPrice;
+                  const pnl     = calcPnL(token.entryPrice, current);
+                  return (
+                    <div key={token._id} className="bg-[#08090d] border border-[#1c1d24] p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-black border border-[#1c1d24] flex items-center justify-center text-white text-[10px] font-bold">
+                            {(token.symbol || '?')[0]}
+                          </div>
                           <div>
-                             <div className="text-[7px] font-mono text-[#4a4b52] uppercase mb-1">Entry_Price</div>
-                             <div className="text-[10px] font-mono text-white">${token.entryPrice.toFixed(8)}</div>
+                            <div className="text-[11px] font-bold text-white uppercase">{token.name}</div>
+                            <div className="text-[8px] font-mono text-[#4a4b52] uppercase">{token.symbol} · {token.chain?.toUpperCase()}</div>
                           </div>
-                          <div className="text-right">
-                             <div className="text-[7px] font-mono text-[#4a4b52] uppercase mb-1">Current_Price</div>
-                             <div className="text-[10px] font-mono text-white">${(currentPrices[token.tokenAddress] || token.entryPrice).toFixed(8)}</div>
-                          </div>
-                       </div>
+                        </div>
+                        <div className={`text-[13px] font-mono font-bold ${pnlColor(pnl)}`}>
+                          {pnl >= 0 ? '+' : ''}{pnl.toFixed(2)}%
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#1c1d24]">
+                        <div>
+                          <div className="text-[7px] font-mono text-[#4a4b52] uppercase mb-1">Entry Price</div>
+                          <div className="text-[10px] font-mono text-[#a4a5ab]">{token.entryPrice > 0 ? `$${token.entryPrice.toFixed(8)}` : '—'}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[7px] font-mono text-[#4a4b52] uppercase mb-1">Current Price</div>
+                          <div className="text-[10px] font-mono text-white">{current > 0 ? `$${current.toFixed(8)}` : '—'}</div>
+                        </div>
+                      </div>
                     </div>
-                  )) : (
-                    <div className="p-10 text-center text-[#4a4b52] uppercase text-[9px] font-mono border border-[#1c1d24] border-dashed">
-                       No alpha positions detected yet.
-                    </div>
-                  )}
-               </div>
+                  );
+                })
+              ) : (
+                <div className="p-10 text-center text-[#4a4b52] uppercase text-[9px] font-mono border border-[#1c1d24] border-dashed">
+                  No positions tracked yet.
+                </div>
+              )}
             </div>
-         </div>
+          </div>
+        </div>
 
-         <div className="space-y-6">
-            <div className="bg-[#08090d] border border-[#1c1d24] p-6 space-y-6">
-               <h4 className="text-[10px] font-bold text-white uppercase tracking-[0.2em] border-b border-[#1c1d24] pb-3">Session_Stats</h4>
-               <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                     <span className="text-[9px] font-mono text-[#4a4b52] uppercase">Total_Tracked</span>
-                     <span className="text-[10px] font-mono text-white">{trackedTokens.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                     <span className="text-[9px] font-mono text-[#4a4b52] uppercase">Winning_Rate</span>
-                     <span className="text-[10px] font-mono text-mint">100%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                     <span className="text-[9px] font-mono text-[#4a4b52] uppercase">Highest_ROI</span>
-                     <span className="text-[10px] font-mono text-mint">+12.0%</span>
-                  </div>
-               </div>
-            </div>
+        {/* ── Side Panel ── */}
+        <div className="space-y-4">
 
-            <div className="bg-mint/5 border border-mint/20 p-6">
-               <div className="flex items-center gap-3 mb-3">
-                  <DollarSign size={16} className="text-mint" />
-                  <h4 className="text-[10px] font-bold text-mint uppercase tracking-[0.2em]">Alpha_Simulation</h4>
-               </div>
-               <p className="text-[9px] font-mono text-[#a4a5ab] leading-relaxed">
-                  PnL is calculated based on real-time price feeds from Birdeye Oracle. Values are simulated for tracking performance only.
-               </p>
+          {/* Real stats */}
+          <div className="bg-[#08090d] border border-[#1c1d24] p-5 space-y-4">
+            <h4 className="text-[9px] font-bold text-white uppercase tracking-[0.2em] border-b border-[#1c1d24] pb-3 flex items-center gap-2">
+              <BarChart2 size={12} className="text-mint" /> Session_Stats
+            </h4>
+            <div className="space-y-3">
+              {[
+                {
+                  label: 'Total_Tracked',
+                  sub: 'Positions monitored',
+                  value: trackedTokens.length.toString(),
+                  color: 'text-white',
+                },
+                {
+                  label: 'Win_Rate',
+                  sub: `${winningCount}W / ${losingCount}L`,
+                  value: `${winRate.toFixed(0)}%`,
+                  color: winRate >= 50 ? 'text-mint' : 'text-red-500',
+                },
+                {
+                  label: 'Highest_ROI',
+                  sub: 'Best performing position',
+                  value: `${highestROI >= 0 ? '+' : ''}${highestROI.toFixed(2)}%`,
+                  color: pnlColor(highestROI),
+                },
+                {
+                  label: 'Lowest_ROI',
+                  sub: 'Worst performing position',
+                  value: `${lowestROI >= 0 ? '+' : ''}${lowestROI.toFixed(2)}%`,
+                  color: pnlColor(lowestROI),
+                },
+              ].map((stat) => (
+                <div key={stat.label} className="flex justify-between items-start gap-2">
+                  <div>
+                    <div className="text-[8px] font-mono text-[#4a4b52] uppercase">{stat.label}</div>
+                    <div className="text-[7px] font-mono text-[#2a2b32]">{stat.sub}</div>
+                  </div>
+                  <span className={`text-[11px] font-mono font-bold ${stat.color}`}>{stat.value}</span>
+                </div>
+              ))}
             </div>
-         </div>
+          </div>
+
+          {/* How it works */}
+          <div className="bg-mint/5 border border-mint/20 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <DollarSign size={13} className="text-mint" />
+              <h4 className="text-[9px] font-bold text-mint uppercase tracking-[0.2em]">How It Works</h4>
+            </div>
+            <div className="space-y-2 text-[8px] font-mono text-[#a4a5ab] leading-relaxed">
+              <p><span className="text-white">Entry Price:</span> The market price at the moment you clicked TRACK in the Terminal.</p>
+              <p><span className="text-white">Current Price:</span> Live price fetched from Birdeye Oracle.</p>
+              <p><span className="text-white">PnL:</span> Percentage difference between entry and current. This is a simulation — no real trades are executed.</p>
+            </div>
+          </div>
+
+          {/* Disclaimer */}
+          <div className="border border-[#1c1d24] p-4 flex gap-2">
+            <Info size={12} className="text-[#4a4b52] shrink-0 mt-0.5" />
+            <p className="text-[7px] font-mono text-[#4a4b52] leading-relaxed">
+              All PnL values are simulated for performance tracking only. This is not financial advice. Always do your own research (DYOR).
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

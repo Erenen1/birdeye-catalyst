@@ -142,14 +142,32 @@ export interface ITrackedToken {
   createdAt: Date;
 }
 
-// ─── Loop Crypto Subscriptions ────────────────────────────────────────────────
+// ─── Sphere Pay Subscriptions ─────────────────────────────────────────────────
 
-export interface ILoopSubscription {
+export type SphereSubscriptionStatus =
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'unpaid'
+  | 'paused'
+  | 'trialing';
+
+export interface ISphereSubscription {
   _id?: string;
-  userId: string; // Typically maps to User.walletAddress
-  loopSubscriptionId: string;
-  status: 'active' | 'past_due' | 'canceled' | 'unpaid' | 'paused';
+  /** Kullanıcının MongoDB ObjectId'si */
+  userId: string;
+  /** Sphere'deki customer nesnesinin ID'si */
+  sphereCustomerId: string;
+  /** Sphere'deki subscription nesnesinin ID'si */
+  sphereSubscriptionId: string;
+  status: SphereSubscriptionStatus;
   plan: string;
+  /** Ödeme zinciri: her zaman 'solana' */
+  chain: 'solana';
+  /** Ödeme token'ı: her zaman 'USDC' */
+  currency: 'USDC';
+  /** Aylık ücret (USDC, tam birim) */
+  amount: number;
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
   gracePeriodEnd?: Date;
@@ -157,11 +175,37 @@ export interface ILoopSubscription {
   updatedAt?: Date;
 }
 
-export interface LoopWebhookEventPayload {
+export interface ISpherePaymentLog {
+  _id?: string;
+  userId: string;
+  sphereSubscriptionId: string;
+  /** Sphere'den gelen payment object ID'si */
+  spherePaymentId: string;
+  status: 'succeeded' | 'failed' | 'pending';
+  amount: number;
+  currency: 'USDC';
+  chain: 'solana';
+  /** Sphere webhook event tipi */
+  eventType: string;
+  /** Ham Sphere event payload'ı */
+  rawPayload: Record<string, unknown>;
+  createdAt?: Date;
+}
+
+/** BullMQ kuyruğuna atılan Sphere webhook event payload'ı */
+export interface SphereWebhookEventPayload {
+  /** Sphere'in idempotency için verdiği event ID */
   eventId: string;
-  eventType: 'subscription.active' | 'payment.failed' | 'payment.success' | 'subscription.canceled';
-  subscriptionId: string;
-  customerAddress: string;
-  timestamp: string; // ISO String
-  data: any; // Additional payload from Loop Crypto
+  eventType:
+    | 'subscription.activated'
+    | 'subscription.canceled'
+    | 'subscription.past_due'
+    | 'payment.succeeded'
+    | 'payment.failed';
+  sphereCustomerId: string;
+  sphereSubscriptionId: string;
+  /** ISO timestamp */
+  timestamp: string;
+  /** Sphere'den gelen ham data nesnesi */
+  data: Record<string, unknown>;
 }

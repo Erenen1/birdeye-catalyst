@@ -105,18 +105,23 @@ export default function LandingPage() {
   }, []);
 
   const getRadarData = (type: string) => {
-    return realAlerts
-      .filter(a => a.triggerType === type)
+    // First try exact triggerType match
+    const filtered = realAlerts.filter(a => a.triggerType === type);
+    // If no data for this trigger type, show latest 5 from all types
+    const source = filtered.length > 0 ? filtered : realAlerts;
+    return source
       .slice(0, 5)
       .map(a => ({
         time: new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        name: a.token.symbol,
-        network: a.chain.toUpperCase(),
-        liq: a.token.liquidity ? `$${(a.token.liquidity / 1000).toFixed(1)}k` : 'N/A',
-        score: a.security?.securityScore ? `${a.security.securityScore}/100` : 'N/A',
-        status: 'MATCH'
+        name: a.token?.symbol ?? '—',
+        network: a.chain?.toUpperCase() ?? '—',
+        liq: a.token?.liquidity ? `$${(a.token.liquidity / 1000).toFixed(1)}k` : 'N/A',
+        score: a.security?.securityScore != null ? `${a.security.securityScore}/100` : 'N/A',
+        status: 'MATCH',
+        triggerType: a.triggerType ?? type,
       }));
   };
+
 
 
   return (

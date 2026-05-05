@@ -22,7 +22,7 @@ export class RuleEngine {
     private readonly redisClient: any, // RedisClientType for caching and real-time streaming
     private readonly operatorRegistry: OperatorRegistry = new OperatorRegistry(),
     private readonly triggerRegistry: TriggerRegistry = new TriggerRegistry()
-  ) {}
+  ) { }
 
 
 
@@ -39,7 +39,7 @@ export class RuleEngine {
 
     const basicFields = ['liquidity', 'volume_24h', 'price_change_24h'];
     const basicConditions = rule.conditions.filter((c: RuleCondition) => basicFields.includes(c.field));
-    
+
     // Eğer kuralda temel bir filtre yoksa, sistem güvenliği için minimum likidite şartı ara
     if (basicConditions.length === 0) {
       return (token.liquidity || 0) > 1000; // Varsayılan adaylık şartı
@@ -63,16 +63,16 @@ export class RuleEngine {
    * Artık eşleşmeleri bir liste olarak döner (Batch processing için).
    */
   async processRuleBatch(
-    rule: IRule, 
-    tokens: BirdeyeToken[], 
+    rule: IRule,
+    tokens: BirdeyeToken[],
     tier: string,
     enrichmentMap?: Map<string, { security: BirdeyeSecurityData, marketData?: BirdeyeMarketData }>
   ): Promise<any[]> {
     const matches: any[] = [];
-    
+
     for (const token of tokens) {
       const { isMatch, security, marketData } = await this.evaluateConditions(rule, token, tier, enrichmentMap?.get(token.address));
-      
+
       if (isMatch) {
         matches.push({
           rule,
@@ -155,7 +155,7 @@ export class RuleEngine {
       // 3. Redis Caching & Real-time Pub/Sub (Optimization)
       // Use Redis Pipeline (multi) to minimize network roundtrips for batch updates
       const multi = this.redisClient.multi();
-      
+
       for (const m of allMatches) {
         const cacheKey = `alerts:user:${m.rule.userId}`;
         const channelKey = `alerts:channel:${m.rule.userId}`;
@@ -181,7 +181,7 @@ export class RuleEngine {
         multi.lTrim('alerts:user:GLOBAL', 0, 49);
         multi.publish('alerts:channel:GLOBAL', alertData);
       }
-      
+
       await multi.exec();
 
       logger.info(`Batch processed: ${alertDocs.length} alerts, ${allJobs.length} notifications, ${allMatches.length} cached.`, 'RuleEngine');
@@ -191,7 +191,7 @@ export class RuleEngine {
   }
 
   private async evaluateConditions(
-    rule: IRule, 
+    rule: IRule,
     token: BirdeyeToken,
     tier: string = 'free',
     preFetched?: { security: BirdeyeSecurityData; marketData?: BirdeyeMarketData }
@@ -199,7 +199,7 @@ export class RuleEngine {
     // 1. Temel Filtreleme (API Gerektirmeyen alanlar)
     const basicFields = ['liquidity', 'volume_24h', 'price_change_24h'];
     const basicConditions = rule.conditions.filter((c: RuleCondition) => basicFields.includes(c.field));
-    
+
     const fieldValues: Record<string, number> = {
       liquidity: token.liquidity,
       volume_24h: token.volume24h,
@@ -214,9 +214,9 @@ export class RuleEngine {
     });
 
     if (!passesBasic) {
-      return { 
-        isMatch: false, 
-        security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 } 
+      return {
+        isMatch: false,
+        security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 }
       };
     }
 
@@ -226,11 +226,11 @@ export class RuleEngine {
     const hasAdvancedConditions = rule.conditions.some((c: RuleCondition) => advancedFields.includes(c.field));
 
     if (tier !== 'pro' && rule.userId !== 'GLOBAL' && hasAdvancedConditions) {
-       // Free users cannot match advanced conditions
-       return { 
-         isMatch: false, 
-         security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 } 
-       };
+      // Free users cannot match advanced conditions
+      return {
+        isMatch: false,
+        security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 }
+      };
     }
 
     // 2. Güvenlik ve Market Verisi Fetching (Sadece temel filtreyi geçenler için)
@@ -248,9 +248,9 @@ export class RuleEngine {
         marketData = await this.birdeyeService.getMarketData(token.address, rule.chain);
       } catch (err) {
         logger.warn(`Security/Market fallback fetch failed for ${token.address}`, 'RuleEngine', err);
-        return { 
-          isMatch: false, 
-          security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 } 
+        return {
+          isMatch: false,
+          security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 }
         };
       }
     }

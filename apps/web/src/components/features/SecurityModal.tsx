@@ -1,6 +1,7 @@
 'use client';
 
-import { X, ShieldCheck, ShieldAlert, Lock, Unlock, Users, Droplets } from 'lucide-react';
+import { useEffect } from 'react';
+import { X, ShieldCheck, ShieldAlert, Lock, Users, Droplets, Info } from 'lucide-react';
 
 interface SecurityData {
   securityScore: number;
@@ -18,147 +19,131 @@ interface SecurityModalProps {
 }
 
 export default function SecurityModal({ tokenName, tokenSymbol, data, onClose }: SecurityModalProps) {
-  // Radar chart points (normalized 0-100)
-  const stats = [
-    { label: 'Security', value: data.securityScore },
-    { label: 'Mint', value: data.mintAuthority ? 0 : 100 },
-    { label: 'Freeze', value: data.freezeAuthority ? 0 : 100 },
-    { label: 'Distribution', value: Math.max(0, 100 - (data.top10HolderPercent || 0)) },
-    { label: 'Liquidity', value: Math.min(100, (data.liquidity / 50000) * 100) }
+  // Close on ESC key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  const score      = data.securityScore ?? 0;
+  const scoreColor = score > 70 ? 'text-mint' : score > 40 ? 'text-amber' : 'text-red-500';
+  const scoreBar   = score > 70 ? 'bg-mint'   : score > 40 ? 'bg-amber'   : 'bg-red-500';
+  const verdict    = score > 80 ? 'HIGH_CONFIDENCE' : score > 60 ? 'CAUTION' : 'HIGH_RISK';
+
+  const metrics = [
+    {
+      icon: <ShieldCheck size={13} className={scoreColor} />,
+      label: 'Security Score',
+      hint: "Birdeye's 0–100 safety rating. Combines on-chain risk factors — higher is safer.",
+      value: `${score}/100`,
+      valueClass: scoreColor,
+    },
+    {
+      icon: <Users size={13} className="text-amber" />,
+      label: 'Top 10 Holders',
+      hint: 'Total supply held by the 10 largest wallets. Above 60% raises whale-dump risk.',
+      value: `${(data.top10HolderPercent ?? 0).toFixed(1)}%`,
+      valueClass: (data.top10HolderPercent ?? 0) > 60 ? 'text-red-500' : 'text-white',
+    },
+    {
+      icon: data.mintAuthority
+        ? <ShieldAlert size={13} className="text-red-500" />
+        : <Lock size={13} className="text-mint" />,
+      label: 'Mint Authority',
+      hint: 'If active, the deployer can print new tokens at will, inflating supply and diluting holders.',
+      value: data.mintAuthority ? 'ACTIVE ⚠️' : 'REVOKED ✅',
+      valueClass: data.mintAuthority ? 'text-red-500' : 'text-mint',
+    },
+    {
+      icon: data.freezeAuthority
+        ? <ShieldAlert size={13} className="text-red-500" />
+        : <Lock size={13} className="text-mint" />,
+      label: 'Freeze Authority',
+      hint: 'If active, the deployer can freeze wallets and block transfers — a major DeFi red flag.',
+      value: data.freezeAuthority ? 'ACTIVE ⚠️' : 'REVOKED ✅',
+      valueClass: data.freezeAuthority ? 'text-red-500' : 'text-mint',
+    },
+    {
+      icon: <Droplets size={13} className="text-blue-400" />,
+      label: 'Liquidity',
+      hint: 'Total USD value locked in the trading pool. Low liquidity increases slippage and manipulation risk.',
+      value: `$${(data.liquidity ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+      valueClass: (data.liquidity ?? 0) > 50000 ? 'text-white' : 'text-amber',
+    },
   ];
 
-  // SVG Radar Chart Logic
-  const size = 200;
-  const center = size / 2;
-  const radius = size * 0.4;
-  
-  const getPoint = (index: number, value: number) => {
-    const angle = (Math.PI * 2 * index) / stats.length - Math.PI / 2;
-    const r = (radius * value) / 100;
-    return {
-      x: center + r * Math.cos(angle),
-      y: center + r * Math.sin(angle)
-    };
-  };
-
-  const points = stats.map((s, i) => getPoint(i, s.value));
-  const polygonPath = points.map(p => `${p.x},${p.y}`).join(' ');
-  
-  // Background pentagons
-  const bgPolygons = [20, 40, 60, 80, 100].map(v => 
-    stats.map((_, i) => getPoint(i, v)).map(p => `${p.x},${p.y}`).join(' ')
-  );
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200 overflow-hidden">
-      <div className="w-full max-w-md h-full md:h-auto bg-[#08090d] border-t md:border border-[#1c1d24] p-6 md:p-8 relative overflow-y-auto">
-        {/* Background Glow */}
-        <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-[80px] ${data.securityScore > 70 ? 'bg-mint/20' : 'bg-red-500/20'}`}></div>
+    /* Backdrop — click outside to close */
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Panel — stop propagation */}
+      <div
+        className="relative w-full max-w-sm bg-[#08090d] border border-[#1c1d24] shadow-[0_0_60px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Ambient glow */}
+        <div className={`absolute -top-16 -right-16 w-32 h-32 rounded-full blur-[60px] pointer-events-none ${score > 70 ? 'bg-mint/15' : 'bg-red-500/15'}`} />
 
-        <button onClick={onClose} className="absolute top-6 right-6 p-2 text-[#4a4b52] hover:text-white transition-colors">
-          <X size={24} className="md:w-5 md:h-5" />
-        </button>
-
-        <div className="space-y-6 md:space-y-8 relative">
-          <div className="space-y-1">
-            <h3 className="text-xl font-bold text-white uppercase tracking-tight">{tokenName}</h3>
-            <p className="text-[10px] font-mono text-mint uppercase tracking-[0.2em]">{tokenSymbol} // SAFETY_RADAR_REPORT</p>
+        {/* Header */}
+        <div className="flex items-start justify-between p-4 border-b border-[#1c1d24]">
+          <div>
+            <div className="text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest mb-0.5">Safety Radar</div>
+            <h3 className="text-sm font-bold text-white uppercase tracking-tight">{tokenName}</h3>
+            <p className="text-[9px] font-mono text-mint mt-0.5">{tokenSymbol}</p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-[#4a4b52] hover:text-white transition-colors mt-0.5 hover:bg-white/5 rounded"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
 
-          {/* Radar Chart Section */}
-          <div className="flex justify-center py-2 md:py-4">
-             <div className="relative w-[180px] h-[180px] md:w-[200px] md:h-[200px]">
-                <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
-                   {/* Background Grid */}
-                   {bgPolygons.map((path, i) => (
-                     <polygon key={i} points={path} fill="none" stroke="#1c1d24" strokeWidth="1" />
-                   ))}
-                   {/* Axes */}
-                   {stats.map((_, i) => {
-                     const p = getPoint(i, 100);
-                     return <line key={i} x1={center} y1={center} x2={p.x} y2={p.y} stroke="#1c1d24" strokeWidth="1" />;
-                   })}
-                   {/* Data Polygon */}
-                   <polygon 
-                     points={polygonPath} 
-                     fill={data.securityScore > 70 ? 'rgba(0, 255, 163, 0.2)' : 'rgba(239, 68, 68, 0.2)'} 
-                     stroke={data.securityScore > 70 ? '#00ffa3' : '#ef4444'} 
-                     strokeWidth="2" 
-                     className="animate-in zoom-in duration-700"
-                   />
-                   {/* Labels */}
-                   {stats.map((s, i) => {
-                     const p = getPoint(i, 115);
-                     return (
-                       <text 
-                         key={i} 
-                         x={p.x} 
-                         y={p.y} 
-                         textAnchor="middle" 
-                         className="text-[8px] font-mono fill-[#4a4b52] uppercase font-bold"
-                       >
-                         {s.label}
-                       </text>
-                     );
-                   })}
-                </svg>
-             </div>
+        {/* Score bar */}
+        <div className="px-4 pt-4 pb-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[8px] font-mono text-[#4a4b52] uppercase tracking-widest">Overall Score</span>
+            <span className={`text-sm font-black font-mono ${scoreColor}`}>{score}/100</span>
           </div>
+          <div className="h-1 bg-[#1c1d24] w-full overflow-hidden">
+            <div
+              className={`h-full transition-all duration-700 ${scoreBar}`}
+              style={{ width: `${score}%` }}
+            />
+          </div>
+          <div className={`text-[8px] font-mono uppercase mt-1.5 text-right ${scoreColor}`}>
+            {verdict}
+          </div>
+        </div>
 
-          {/* Detailed Stats */}
-          <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 md:gap-4">
-             <div className="p-4 bg-black/40 border border-[#1c1d24] space-y-2">
-                <div className="flex items-center gap-2 text-[8px] font-mono text-[#4a4b52] uppercase">
-                   <ShieldCheck size={10} className="text-mint" /> Security_Score
+        {/* Metrics */}
+        <div className="px-4 pb-4 space-y-2 mt-1">
+          {metrics.map((m) => (
+            <div key={m.label} className="flex items-center justify-between py-2 border-b border-[#1c1d24]/60 last:border-0">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {m.icon}
+                <div className="min-w-0">
+                  <div className="text-[9px] font-mono text-[#a4a5ab] uppercase">{m.label}</div>
+                  <div className="text-[8px] font-mono text-[#4a4b52] leading-tight mt-0.5 max-w-[170px]">{m.hint}</div>
                 </div>
-                <div className="text-lg font-bold text-white font-mono">{data.securityScore}/100</div>
-             </div>
-             <div className="p-4 bg-black/40 border border-[#1c1d24] space-y-2">
-                <div className="flex items-center gap-2 text-[8px] font-mono text-[#4a4b52] uppercase">
-                   <Users size={10} className="text-amber" /> Top_10_Holders
-                </div>
-                <div className="text-lg font-bold text-white font-mono">{(data.top10HolderPercent || 0).toFixed(1)}%</div>
-             </div>
-             <div className="p-4 bg-black/40 border border-[#1c1d24] space-y-2">
-                <div className="flex items-center gap-2 text-[8px] font-mono text-[#4a4b52] uppercase">
-                   {data.mintAuthority ? <ShieldAlert size={10} className="text-red-500" /> : <Lock size={10} className="text-mint" />} Mint_Authority
-                </div>
-                <div className={`text-xs font-bold font-mono uppercase ${data.mintAuthority ? 'text-red-500' : 'text-mint'}`}>
-                   {data.mintAuthority ? 'ENABLED_⚠️' : 'DISABLED_✅'}
-                </div>
-             </div>
-             <div className="p-4 bg-black/40 border border-[#1c1d24] space-y-2">
-                <div className="flex items-center gap-2 text-[8px] font-mono text-[#4a4b52] uppercase">
-                   {data.freezeAuthority ? <ShieldAlert size={10} className="text-red-500" /> : <Lock size={10} className="text-mint" />} Freeze_Auth
-                </div>
-                <div className={`text-xs font-bold font-mono uppercase ${data.freezeAuthority ? 'text-red-500' : 'text-mint'}`}>
-                   {data.freezeAuthority ? 'ENABLED_⚠️' : 'DISABLED_✅'}
-                </div>
-             </div>
-          </div>
+              </div>
+              <span className={`text-[10px] font-bold font-mono ml-3 shrink-0 ${m.valueClass}`}>{m.value}</span>
+            </div>
+          ))}
+        </div>
 
-          <div className="pt-4 flex flex-col items-center gap-4">
-             <div className={`w-full h-1 bg-[#1c1d24] relative overflow-hidden`}>
-                <div 
-                  className={`absolute inset-y-0 left-0 transition-all duration-1000 ${data.securityScore > 70 ? 'bg-mint' : 'bg-red-500'}`}
-                  style={{ width: `${data.securityScore}%` }}
-                ></div>
-             </div>
-             <p className="text-[10px] font-mono text-[#4a4b52] uppercase text-center leading-relaxed">
-                Automated security scan completed. Catalyst recommendation: <span className={data.securityScore > 70 ? 'text-mint' : 'text-amber'}>
-                  {data.securityScore > 80 ? 'HIGH_CONFIDENCE' : data.securityScore > 60 ? 'CAUTION' : 'HIGH_RISK'}
-                </span>
-             </p>
-             <button 
-                onClick={onClose}
-                className="w-full md:hidden py-3 bg-[#1c1d24] text-white text-[10px] font-bold uppercase tracking-widest mt-2"
-             >
-                Close Report
-             </button>
-          </div>
+        {/* Footer */}
+        <div className="px-4 pb-4">
+          <p className="text-[8px] font-mono text-[#4a4b52] leading-relaxed flex gap-1.5">
+            <Info size={10} className="shrink-0 mt-px" />
+            Data sourced from Birdeye Oracle in real-time. Not financial advice. Always DYOR.
+          </p>
         </div>
       </div>
     </div>
-
   );
 }

@@ -3,23 +3,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
-import { Zap, Activity, Shield } from 'lucide-react';
+import { Activity, Shield, Droplets, Clock } from 'lucide-react';
 import SecurityModal from '@/components/features/SecurityModal';
 
 export default function TerminalPage() {
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const router = useRouter();
   const [globalAlerts, setGlobalAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSecurity, setSelectedSecurity] = useState<any | null>(null);
+  const [trackingId, setTrackingId] = useState<string | null>(null);
 
   const fetchGlobalAlerts = useCallback(async () => {
     try {
       const res = await fetch(`/api/alerts?userId=GLOBAL`);
       const data = await res.json();
       if (Array.isArray(data)) setGlobalAlerts(data);
-    } catch (error) {
-      console.error('Error fetching global alerts:', error);
+    } catch (err) {
+      console.error('[Terminal] Fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -27,6 +28,7 @@ export default function TerminalPage() {
 
   const trackToken = async (alert: any) => {
     if (!address) return;
+    setTrackingId(alert._id);
     try {
       const res = await fetch('/api/tracked', {
         method: 'POST',
@@ -41,11 +43,11 @@ export default function TerminalPage() {
           chain: alert.chain,
         }),
       });
-      if (res.ok) {
-        router.push('/portfolio');
-      }
-    } catch (error) {
-      console.error('Error tracking token:', error);
+      if (res.ok) router.push('/portfolio');
+    } catch (err) {
+      console.error('[Terminal] Track error:', err);
+    } finally {
+      setTrackingId(null);
     }
   };
 
@@ -56,91 +58,196 @@ export default function TerminalPage() {
   }, [fetchGlobalAlerts]);
 
   const formatTimeAgo = (date: any) => {
-    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    return `${Math.floor(seconds / 3600)}h ago`;
+    const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+    return `${Math.floor(s / 3600)}h ago`;
+  };
+
+  const scoreColor = (s: number) =>
+    s > 70 ? 'text-mint' : s > 40 ? 'text-amber' : 'text-red-500';
+
+  const triggerLabel: Record<string, string> = {
+    new_listing:         'New Listing',
+    trending_entry:      'Trending Entry',
+    whale_radar:         'Whale Movement',
+    liquidity_drain:     'Liquidity Drain',
+    volatility_breakout: 'Volatility Breakout',
+    pump_fun_migration:  'Pump.fun Migration',
   };
 
   return (
     <div className="space-y-6 md:space-y-10">
+
+      {/* ── Header ── */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[#1c1d24] pb-6 gap-4">
-         <div className="space-y-2 md:space-y-1">
-           <h3 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-tighter">Alpha Terminal</h3>
-           <p className="text-[10px] md:text-[11px] font-mono text-[#4a4b52] max-w-md">Aggregated real-time signals from all active Catalyst Nodes across the network.</p>
-         </div>
-         <div className="text-[9px] md:text-[10px] font-mono text-mint flex items-center gap-2 bg-mint/5 px-3 py-1.5 border border-mint/10">
-           <div className="w-1.5 h-1.5 bg-mint animate-pulse"></div>
-           NETWORK_SYNCHRONIZED: {globalAlerts.length} SIGNALS
-         </div>
+        <div className="space-y-1">
+          <h3 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-tighter">Alpha Terminal</h3>
+          <p className="text-[11px] font-mono text-[#4a4b52] max-w-lg leading-relaxed">
+            Aggregated real-time signals from all active Catalyst Nodes across the network.
+            Each row represents a token opportunity triggered by your deployed rules.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-[9px] font-mono text-mint bg-mint/5 px-3 py-1.5 border border-mint/10">
+          <div className="w-1.5 h-1.5 bg-mint animate-pulse rounded-full" />
+          LIVE · {globalAlerts.length} SIGNALS · Refreshes every 30s
+        </div>
       </div>
 
+      {/* ── Info Cards ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {[
+          {
+            icon: <Activity size={14} className="text-mint" />,
+            title: 'What is a Signal?',
+            desc: "When your deployed rules match a token on-chain, it appears here. Every signal is backed by live market data — no simulations.",
+          },
+          {
+            icon: <Droplets size={14} className="text-blue-400" />,
+            title: 'Liquidity',
+            desc: 'Total USD value locked in the token\'s trading pool. Higher liquidity means easier trades and less price slippage.',
+          },
+          {
+            icon: <Shield size={14} className="text-amber" />,
+            title: 'Safety Score',
+            desc: "Birdeye's 0–100 security rating. Factors in mint/freeze authority, holder concentration, and other on-chain risk signals.",
+          },
+        ].map((card) => (
+          <div key={card.title} className="flex gap-3 p-3 bg-[#08090d] border border-[#1c1d24]">
+            <div className="mt-0.5 shrink-0">{card.icon}</div>
+            <div>
+              <div className="text-[9px] font-bold text-white uppercase tracking-wide mb-1">{card.title}</div>
+              <p className="text-[9px] font-mono text-[#4a4b52] leading-relaxed">{card.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Signal List ── */}
       <div className="border border-[#1c1d24] bg-[#08090d] divide-y divide-[#1c1d24]">
-         {loading ? (
-            <div className="p-20 text-center animate-pulse text-[#4a4b52] font-mono uppercase text-[10px]">Syncing_Oracles...</div>
-         ) : globalAlerts.length > 0 ? globalAlerts.map((alert) => (
-           <div key={alert._id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between group hover:bg-white/[0.02] transition-all border-l-2 border-transparent hover:border-mint gap-4 sm:gap-0">
-              <div className="flex items-center gap-4 md:gap-6">
-                 <div className="w-10 h-10 md:w-12 md:h-12 border border-[#1c1d24] flex items-center justify-center bg-[#0c0d12] text-mint font-bold text-sm md:text-base">
-                    {alert.token.symbol[0]}
-                 </div>
-                 <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-[11px] md:text-[12px] font-bold text-white uppercase tracking-wide">
-                       {alert.token.name} <span className="text-[#4a4b52] font-normal text-[9px] md:text-[10px]">({alert.token.symbol})</span>
+        {loading ? (
+          <div className="p-20 text-center animate-pulse text-[#4a4b52] font-mono uppercase text-[10px]">
+            Syncing Oracles...
+          </div>
+        ) : globalAlerts.length > 0 ? (
+          globalAlerts.map((alert) => {
+            const score       = alert.security?.securityScore ?? 0;
+            const isMintRisk  = alert.security?.mintAuthority;
+            const isFreezeRisk = alert.security?.freezeAuthority;
+
+            return (
+              <div
+                key={alert._id}
+                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between group hover:bg-white/[0.02] transition-all border-l-2 border-transparent hover:border-mint gap-4 sm:gap-0"
+              >
+                {/* Left: Token Info */}
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 border border-[#1c1d24] flex items-center justify-center bg-[#0c0d12] text-mint font-bold text-sm shrink-0">
+                    {(alert.token.symbol || '?')[0]}
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[12px] font-bold text-white uppercase tracking-wide">{alert.token.name}</span>
+                      <span className="text-[9px] font-mono text-[#4a4b52]">({alert.token.symbol})</span>
+                      {isMintRisk && (
+                        <span className="text-[7px] font-bold bg-red-500/10 text-red-500 border border-red-500/20 px-1.5 py-0.5 uppercase">
+                          Mint Risk
+                        </span>
+                      )}
+                      {isFreezeRisk && (
+                        <span className="text-[7px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20 px-1.5 py-0.5 uppercase">
+                          Freeze Risk
+                        </span>
+                      )}
                     </div>
-                    <div className="text-[9px] font-mono text-[#4a4b52]">
-                       TRIGGERED_BY: <span className="text-amber">NODE_{alert.ruleId.slice(-4)}</span> <span className="hidden xs:inline">•</span> <span className="text-mint block xs:inline">{alert.chain.toUpperCase()}</span>
+                    <div className="text-[9px] font-mono text-[#4a4b52] flex items-center gap-2 flex-wrap">
+                      <span>Triggered by: <span className="text-amber">NODE_{alert.ruleId?.slice(-4) ?? '????'}</span></span>
+                      <span className="text-[#2a2b32]">·</span>
+                      <span className="text-mint">{alert.chain?.toUpperCase()}</span>
+                      <span className="text-[#2a2b32]">·</span>
+                      <span className="text-[#4a4b52]">{triggerLabel[alert.triggerType] ?? alert.triggerType ?? 'Signal'}</span>
                     </div>
-                 </div>
-              </div>
-              <div className="flex items-center justify-between sm:justify-end gap-6 md:gap-12 text-right">
-                 <div className="space-y-1">
-                    <div className="text-[7px] md:text-[8px] font-mono text-[#4a4b52] uppercase">Liquidity</div>
-                    <div className="text-[10px] font-mono text-white">${alert.token.liquidity.toLocaleString()}</div>
-                 </div>
-                 <div className="space-y-1 hidden xs:block">
-                    <div className="text-[7px] md:text-[8px] font-mono text-[#4a4b52] uppercase">Safety</div>
-                    <div className="text-[10px] font-mono text-mint">{alert.security.securityScore}/100</div>
-                 </div>
-                 <div className="space-y-1">
-                    <div className="text-[7px] md:text-[8px] font-mono text-[#4a4b52] uppercase">Detected</div>
+                  </div>
+                </div>
+
+                {/* Right: Metrics + Actions */}
+                <div className="flex items-center justify-between sm:justify-end gap-4 md:gap-8 text-right ml-14 sm:ml-0">
+                  {/* Liquidity */}
+                  <div className="space-y-0.5">
+                    <div className="text-[7px] font-mono text-[#4a4b52] uppercase flex items-center gap-1 justify-end">
+                      <Droplets size={9} /> Liquidity
+                    </div>
+                    <div className="text-[10px] font-mono text-white">
+                      ${alert.token.liquidity?.toLocaleString('en-US', { maximumFractionDigits: 0 }) ?? '—'}
+                    </div>
+                    <div className="text-[7px] font-mono text-[#4a4b52]">
+                      {alert.token.liquidity > 100000 ? 'High' : alert.token.liquidity > 10000 ? 'Medium' : 'Low'} liquidity
+                    </div>
+                  </div>
+
+                  {/* Safety Score */}
+                  <div className="space-y-0.5 hidden xs:block">
+                    <div className="text-[7px] font-mono text-[#4a4b52] uppercase flex items-center gap-1 justify-end">
+                      <Shield size={9} /> Safety
+                    </div>
+                    <div className={`text-[10px] font-mono font-bold ${scoreColor(score)}`}>
+                      {score}/100
+                    </div>
+                    <div className={`text-[7px] font-mono ${scoreColor(score)}`}>
+                      {score > 70 ? 'Low risk' : score > 40 ? 'Medium risk' : 'High risk'}
+                    </div>
+                  </div>
+
+                  {/* Detected */}
+                  <div className="space-y-0.5">
+                    <div className="text-[7px] font-mono text-[#4a4b52] uppercase flex items-center gap-1 justify-end">
+                      <Clock size={9} /> Detected
+                    </div>
                     <div className="text-[10px] font-mono text-[#a4a5ab]">{formatTimeAgo(alert.createdAt)}</div>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <button 
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex items-center gap-2">
+                    <button
                       onClick={() => setSelectedSecurity(alert)}
-                      className="p-2 md:p-2.5 border border-[#1c1d24] text-[#4a4b52] hover:text-mint hover:border-mint transition-all"
+                      className="p-2 border border-[#1c1d24] text-[#4a4b52] hover:text-mint hover:border-mint transition-all"
                       title="Safety Radar"
                     >
-                      <Shield size={14} className="md:w-4 md:h-4" />
+                      <Shield size={14} />
                     </button>
-                    <button 
+                    <button
                       onClick={() => trackToken(alert)}
-                      className="px-4 md:px-5 py-2 md:py-2.5 border border-[#1c1d24] text-[9px] font-mono font-bold text-amber hover:bg-amber hover:text-black transition-all uppercase tracking-widest"
+                      disabled={trackingId === alert._id}
+                      className="px-4 py-2 border border-[#1c1d24] text-[9px] font-mono font-bold text-amber hover:bg-amber hover:text-black transition-all uppercase tracking-widest disabled:opacity-50"
                     >
-                      TRACK
+                      {trackingId === alert._id ? '...' : 'TRACK'}
                     </button>
-                 </div>
+                  </div>
+                </div>
               </div>
-           </div>
-         )) : (
-            <div className="p-20 text-center space-y-4">
-               <Activity size={32} className="mx-auto text-[#1c1d24] animate-pulse" />
-               <p className="text-[10px] font-mono text-[#4a4b52] uppercase tracking-[0.2em]">Waiting for network events... Active nodes scanning.</p>
-            </div>
-         )}
+            );
+          })
+        ) : (
+          <div className="p-20 text-center space-y-4">
+            <Activity size={32} className="mx-auto text-[#1c1d24] animate-pulse" />
+            <p className="text-[10px] font-mono text-[#4a4b52] uppercase tracking-[0.2em]">
+              Active nodes scanning the network. New signals will appear here.
+            </p>
+          </div>
+        )}
       </div>
 
+      {/* Security Modal */}
       {selectedSecurity && (
-        <SecurityModal 
+        <SecurityModal
           tokenName={selectedSecurity.token.name}
           tokenSymbol={selectedSecurity.token.symbol}
           data={{
-            securityScore: selectedSecurity.security.securityScore,
-            mintAuthority: selectedSecurity.security.mintAuthority,
-            freezeAuthority: selectedSecurity.security.freezeAuthority,
-            top10HolderPercent: selectedSecurity.security.top10HolderPercent,
-            liquidity: selectedSecurity.token.liquidity
+            securityScore:     selectedSecurity.security?.securityScore ?? 0,
+            mintAuthority:     selectedSecurity.security?.noMintAuthority === false || selectedSecurity.security?.mintAuthority,
+            freezeAuthority:   selectedSecurity.security?.noFreezeAuthority === false || selectedSecurity.security?.freezeAuthority,
+            top10HolderPercent: selectedSecurity.security?.top10HolderPercent ?? 0,
+            liquidity:         selectedSecurity.token?.liquidity ?? 0,
           }}
           onClose={() => setSelectedSecurity(null)}
         />
