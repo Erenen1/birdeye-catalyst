@@ -4,6 +4,10 @@ import { RuleEngine } from '../engine/RuleEngine';
 import { UserModel, IRule, TriggerType, BirdeyeToken, BirdeyeSecurityData, BirdeyeMarketData, logger } from '@chaintrigger/shared';
 import { TriggerRegistry } from '../engine/strategies/TriggerRegistry';
 
+const POLLING_PRO = Number(process.env.POLLING_INTERVAL_PRO_MS) || 3600000;
+const POLLING_FREE = Number(process.env.POLLING_INTERVAL_FREE_MS) || 14400000;
+const POLLING_BUFFER = 100000; // 100s buffer for rounding
+
 interface ChainState {
   chain: string;
   intervalMs: number;
@@ -85,7 +89,7 @@ export class GlobalWatcherService {
       // Update or create watchers for each chain
       for (const [chain, rules] of rulesByChain) {
         const hasPro = rules.some((r: IRule) => userTierMap.get(r.userId) === 'pro' || r.userId === 'GLOBAL');
-        const intervalMs = hasPro ? 3600000 : 14400000; // Pro/Global: 1h, Free: 4h
+        const intervalMs = hasPro ? POLLING_PRO : POLLING_FREE; 
 
         this.ensureWatcher(chain, intervalMs, rules, userTierMap);
       }
@@ -232,13 +236,13 @@ export class GlobalWatcherService {
 
       const tier = (userTierMap.get(rule.userId) || (rule.userId === 'GLOBAL' ? 'pro' : 'free')) as string;
       
-      // If it's a 1h tick (Pro speed) but rule is Free, skip if it's not the 4h mark
-      if (tier === 'free' && state.intervalMs === 3600000) {
+      // If it's a faster tick (Pro speed) but rule is Free, skip if it's not the free mark
+      if (tier === 'free' && state.intervalMs < POLLING_FREE) {
         const now = Date.now();
         const ruleKey = rule._id?.toString() || `${rule.userId}-${rule.name}`;
         const lastRun = this.lastRunMap.get(ruleKey) || 0;
         
-        if (now - lastRun < 14300000) continue; // Skip until ~4 hours passed (with slight buffer)
+        if (now - lastRun < (POLLING_FREE - POLLING_BUFFER)) continue; 
         this.lastRunMap.set(ruleKey, now);
       }
 
