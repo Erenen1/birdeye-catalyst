@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Crown, Zap, Shield, Check, Copy, Gift, Users, ArrowUpRight, Lock, Activity, Globe, Cpu } from 'lucide-react';
 import { LoopSubscriptionManager } from '@/components/subscription/LoopSubscriptionManager';
+import { cn } from '@/lib/utils';
 
 export default function UpgradePage() {
   const { address } = useAccount();
@@ -25,9 +26,21 @@ export default function UpgradePage() {
 
   const copyReferral = async () => {
     if (!userStatus?.referralCode) return;
+    const url = `${window.location.origin}/?ref=${userStatus.referralCode}`;
+    
     try {
-      const url = `${window.location.origin}/?ref=${userStatus.referralCode}`;
-      await navigator.clipboard.writeText(url);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+      
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -167,14 +180,14 @@ export default function UpgradePage() {
             </div>
 
             <div className="lg:w-1/2 w-full space-y-4">
-              <div className="text-[10px] font-mono text-[#4a4b52] uppercase tracking-widest mb-2">Personal_Access_Link</div>
-              <div className="flex gap-2">
+              <div className="text-[10px] font-mono text-[#4a4b52] uppercase tracking-[0.2em] mb-2">Personal_Access_Link</div>
+              <div className="flex gap-0 group/copy">
                 <div className="relative flex-1">
                   <input 
                     type="text" 
                     readOnly 
                     value={userStatus?.referralCode ? `${window.location.origin}/?ref=${userStatus.referralCode}` : 'INITIALIZING_CODE...'}
-                    className="w-full bg-black border border-[#1c1d24] px-4 py-4 text-[11px] font-mono text-white focus:outline-none focus:border-mint/50 transition-all"
+                    className="w-full bg-black/40 border border-[#1c1d24] border-r-0 px-5 py-4 text-[11px] font-mono text-mint/80 focus:outline-none transition-all group-hover/copy:border-mint/30"
                   />
                   {!userStatus?.referralCode && (
                     <div className="absolute inset-0 bg-black/80 flex items-center justify-center animate-pulse">
@@ -184,9 +197,14 @@ export default function UpgradePage() {
                 </div>
                 <button 
                   onClick={copyReferral}
-                  className="px-6 bg-white text-black font-black uppercase text-[10px] tracking-widest hover:bg-mint transition-all flex items-center justify-center gap-2"
+                  className={cn(
+                    "px-8 font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 border",
+                    copied 
+                      ? "bg-mint text-black border-mint" 
+                      : "bg-white text-black border-white hover:bg-mint hover:border-mint shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(34,197,94,0.4)]"
+                  )}
                 >
-                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                  {copied ? <Check size={16} className="animate-bounce" /> : <Copy size={16} />}
                   {copied ? 'COPIED' : 'COPY'}
                 </button>
               </div>
