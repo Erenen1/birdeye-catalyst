@@ -12,7 +12,7 @@ import type { IRuleRepository } from '../interfaces/IRuleRepository';
 import type { IRule, RuleCondition, BirdeyeToken, NotificationJobPayload, BirdeyeSecurityData, BirdeyeMarketData } from '@chaintrigger/shared';
 import { OperatorRegistry } from './operators/OperatorRegistry';
 import { TriggerRegistry } from './strategies/TriggerRegistry';
-import { AlertModel } from '@chaintrigger/shared';
+import { AlertModel, logger } from '@chaintrigger/shared';
 
 export class RuleEngine {
   constructor(
@@ -184,9 +184,9 @@ export class RuleEngine {
       
       await multi.exec();
 
-      console.log(`[RuleEngine] Batch processed: ${alertDocs.length} alerts, ${allJobs.length} notifications, ${allMatches.length} cached.`);
+      logger.info(`Batch processed: ${alertDocs.length} alerts, ${allJobs.length} notifications, ${allMatches.length} cached.`, 'RuleEngine');
     } catch (error) {
-      console.error('[RuleEngine] Batch process error:', error);
+      logger.error('Batch process error', 'RuleEngine', error);
     }
   }
 
@@ -247,6 +247,7 @@ export class RuleEngine {
         security = await this.birdeyeService.getTokenSecurity(token.address, rule.chain);
         marketData = await this.birdeyeService.getMarketData(token.address, rule.chain);
       } catch (err) {
+        logger.warn(`Security/Market fallback fetch failed for ${token.address}`, 'RuleEngine', err);
         return { 
           isMatch: false, 
           security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 } 

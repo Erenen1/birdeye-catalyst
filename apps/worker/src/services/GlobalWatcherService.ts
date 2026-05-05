@@ -1,7 +1,7 @@
 import { IRuleRepository } from '../interfaces/IRuleRepository';
 import { IBirdeyeService } from '../interfaces/IBirdeyeService';
 import { RuleEngine } from '../engine/RuleEngine';
-import { UserModel, IRule, TriggerType, BirdeyeToken, BirdeyeSecurityData, BirdeyeMarketData } from '@chaintrigger/shared';
+import { UserModel, IRule, TriggerType, BirdeyeToken, BirdeyeSecurityData, BirdeyeMarketData, logger } from '@chaintrigger/shared';
 import { TriggerRegistry } from '../engine/strategies/TriggerRegistry';
 
 interface ChainState {
@@ -50,7 +50,7 @@ export class GlobalWatcherService {
   ) {}
 
   async start() {
-    console.log('🌐 Global Watcher Service starting...');
+    logger.info('Global Watcher Service starting...', 'Watcher');
     
     // Initial sync
     await this.sync();
@@ -85,7 +85,7 @@ export class GlobalWatcherService {
       // Update or create watchers for each chain
       for (const [chain, rules] of rulesByChain) {
         const hasPro = rules.some((r: IRule) => userTierMap.get(r.userId) === 'pro' || r.userId === 'GLOBAL');
-        const intervalMs = hasPro ? 3600000 : 14400000; // Pro: 1h, Free: 4h
+        const intervalMs = hasPro ? 300000 : 900000; // Pro/Global: 5m, Free: 15m
 
         this.ensureWatcher(chain, intervalMs, rules, userTierMap);
       }
@@ -97,7 +97,7 @@ export class GlobalWatcherService {
         }
       }
     } catch (error) {
-      console.error('[GlobalWatcher] Sync Error:', error);
+      logger.error('Sync Error', 'Watcher', error);
     }
   }
 
@@ -111,12 +111,12 @@ export class GlobalWatcherService {
 
       // If interval changed, restart
       if (currentState.intervalMs !== intervalMs) {
-        console.log(`[GlobalWatcher] Updating interval for ${chain}: ${currentState.intervalMs}ms -> ${intervalMs}ms`);
+        logger.info(`Updating interval for ${chain}: ${currentState.intervalMs}ms -> ${intervalMs}ms`, 'Watcher');
         this.stopWatcher(chain);
         this.startWatcher(chain, intervalMs);
       }
     } else {
-      console.log(`[GlobalWatcher] Starting new watcher for ${chain} at ${intervalMs}ms`);
+      logger.info(`Starting new watcher for ${chain} at ${intervalMs}ms`, 'Watcher');
       this.startWatcher(chain, intervalMs);
       const newState = this.chainStates.get(chain)!;
       newState.rules = rules;
@@ -146,37 +146,44 @@ export class GlobalWatcherService {
       clearInterval(state.timer);
     }
     this.chainStates.delete(chain);
-    console.log(`[GlobalWatcher] Stopped watcher for ${chain}`);
+    logger.info(`Stopped watcher for ${chain}`, 'Watcher');
   }
 
   private lastRunMap: Map<string, number> = new Map();
 
   private async tick(chain: string) {
+    logger.debug(`Tick started for ${chain}...`, 'Watcher');
     const state = this.chainStates.get(chain);
     if (!state) return;
 
-    const { rules, userTierMap } = state;
-    if (rules.length === 0) return;
-
-    // 1. Identify unique trigger types for this chain
-    const triggerTypes = [...new Set(rules.map((r: IRule) => r.triggerType))];
-
-    // 2. Fetch data ONCE per trigger type (Primary Polling)
-    const fetchPromises = triggerTypes.map(async (type: TriggerType) => {
-      try {
-        const strategy = this.triggerRegistry.resolve(type);
-        const tokens = await strategy.fetchAndFilter(this.birdeyeService, chain);
-        return { type, tokens };
-      } catch (error) {
-        console.error(`[GlobalWatcher] Fetch error for ${chain}:${type}:`, error);
-        return { type, tokens: [] };
+    try {
+      const { rules, userTierMap } = state;
+      if (rules.length === 0) {
+        logger.debug(`No rules for ${chain}, skipping.`, 'Watcher');
+        return;
       }
-    });
 
-    const results = await Promise.all(fetchPromises);
-    const tokensByType = new Map<TriggerType, BirdeyeToken[]>(
-      results.map((r: any) => [r.type, r.tokens])
-    );
+      // 1. Identify unique trigger types for this chain
+      const triggerTypes = [...new Set(rules.map((r: IRule) => r.triggerType))];
+      logger.info(`Fetching data for ${triggerTypes.length} triggers on ${chain}: ${triggerTypes.join(', ')}`, 'Watcher');
+
+      // 2. Fetch data ONCE per trigger type (Primary Polling)
+      const fetchPromises = triggerTypes.map(async (type: TriggerType) => {
+        try {
+          const strategy = this.triggerRegistry.resolve(type);
+          const tokens = await strategy.fetchAndFilter(this.birdeyeService, chain);
+          logger.debug(`Fetched ${tokens.length} tokens for ${type} on ${chain}`, 'Watcher');
+          return { type, tokens };
+        } catch (error: any) {
+          logger.error(`Fetch error for ${chain}:${type}`, 'Watcher', error.message);
+          return { type, tokens: [] };
+        }
+      });
+
+      const results = await Promise.all(fetchPromises);
+      const tokensByType = new Map<TriggerType, BirdeyeToken[]>(
+        results.map((r: any) => [r.type, r.tokens])
+      );
 
     // 2.5 Candidate Enrichment (The SCALE Optimization)
     // 20.000 kural olsa bile, sadece temel filtreyi geçenler için tek bir sefer veri çekiyoruz.
@@ -205,7 +212,7 @@ export class GlobalWatcherService {
             ]);
             enrichmentMap.set(address, { security, marketData });
           } catch (err) {
-            console.error(`[GlobalWatcher] Enrichment failed for ${address}:`, err);
+            logger.warn(`Enrichment failed for ${address}`, 'Watcher', err);
           }
         }));
         
@@ -245,7 +252,7 @@ export class GlobalWatcherService {
       if (result.status === 'fulfilled') {
         allMatches.push(...result.value);
       } else {
-        console.error(`[GlobalWatcher] Rule processing batch failed:`, result.reason);
+        logger.error('Rule processing batch failed', 'Watcher', result.reason);
       }
     }
 
@@ -254,7 +261,10 @@ export class GlobalWatcherService {
       await this.ruleEngine.batchProcessResults(allMatches);
     }
 
-    console.log(`[GlobalWatcher] Tick complete for ${chain}. Rules: ${rules.length}, Candidates: ${candidates.size}, Matches: ${allMatches.length}`);
+    logger.info(`Tick complete for ${chain}. Rules: ${rules.length}, Candidates: ${candidates.size}, Matches: ${allMatches.length}`, 'Watcher');
+    } catch (error: any) {
+      logger.error(`Tick failed for ${chain}`, 'Watcher', error.message);
+    }
   }
 
   async stopAll() {
