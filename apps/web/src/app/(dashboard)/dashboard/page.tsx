@@ -288,7 +288,7 @@ export default function Dashboard() {
               <h4 className="text-[10px] font-bold text-white uppercase tracking-widest">01_TRIGGER_LAYER</h4>
             </div>
             <p className="text-[10px] font-mono text-[#4a4b52] leading-relaxed">
-              The system scans Birdeye APIs in seconds, capturing new listings as they hit the market.
+              The system scans Birdeye APIs at optimized intervals, capturing new listings as they hit the market.
             </p>
           </div>
           <div className="p-4 border-b md:border-b-0 md:border-r border-[#1c1d24]">

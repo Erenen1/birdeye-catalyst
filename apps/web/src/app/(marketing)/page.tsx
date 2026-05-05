@@ -143,7 +143,7 @@ export default function LandingPage() {
 
         <p className="max-w-xl text-[#849587] text-[11px] md:text-[13px] font-mono mb-10 leading-relaxed uppercase tracking-wide">
           The autonomous event router powered by Birdeye. Set triggers for new listings 
-          and trending entries with near-zero latency.
+          and trending entries with optimized latency.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto px-4 sm:px-0">
