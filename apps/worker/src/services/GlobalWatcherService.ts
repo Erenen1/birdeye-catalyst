@@ -85,7 +85,7 @@ export class GlobalWatcherService {
       // Update or create watchers for each chain
       for (const [chain, rules] of rulesByChain) {
         const hasPro = rules.some((r: IRule) => userTierMap.get(r.userId) === 'pro' || r.userId === 'GLOBAL');
-        const intervalMs = hasPro ? 300000 : 900000; // Pro/Global: 5m, Free: 15m
+        const intervalMs = hasPro ? 3600000 : 14400000; // Pro/Global: 1h, Free: 4h
 
         this.ensureWatcher(chain, intervalMs, rules, userTierMap);
       }
@@ -238,7 +238,7 @@ export class GlobalWatcherService {
         const ruleKey = rule._id?.toString() || `${rule.userId}-${rule.name}`;
         const lastRun = this.lastRunMap.get(ruleKey) || 0;
         
-        if (now - lastRun < 14000000) continue; // Skip until ~4 hours passed
+        if (now - lastRun < 14300000) continue; // Skip until ~4 hours passed (with slight buffer)
         this.lastRunMap.set(ruleKey, now);
       }
 
