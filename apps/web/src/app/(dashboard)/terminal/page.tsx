@@ -30,6 +30,16 @@ export default function TerminalPage() {
     if (!address) return;
     setTrackingId(alert._id);
     try {
+      // Fetch live price at the moment of tracking (BirdeyeToken has no price field)
+      let entryPrice = 0;
+      try {
+        const priceRes = await fetch(`/api/tokens/price?address=${alert.token.address}&chain=${alert.chain}`);
+        const priceData = await priceRes.json();
+        if (priceData?.value != null) entryPrice = priceData.value;
+      } catch {
+        // price fetch failed — entry will be 0 but tracking still works
+      }
+
       const res = await fetch('/api/tracked', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,7 +48,7 @@ export default function TerminalPage() {
           tokenAddress: alert.token.address,
           symbol: alert.token.symbol,
           name: alert.token.name,
-          entryPrice: alert.token.price || 0,
+          entryPrice,
           entryLiquidity: alert.token.liquidity,
           chain: alert.chain,
         }),
@@ -50,6 +60,7 @@ export default function TerminalPage() {
       setTrackingId(null);
     }
   };
+
 
   useEffect(() => {
     fetchGlobalAlerts();
