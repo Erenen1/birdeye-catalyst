@@ -7,6 +7,8 @@
 [![Redis](https://img.shields.io/badge/Redis-Cache_%26_PubSub-DC382D?style=for-the-badge&logo=redis)](https://redis.io)
 [![BullMQ](https://img.shields.io/badge/BullMQ-Job_Queue-FF4949?style=for-the-badge)](#)
 
+![Birdeye Catalyst Hero](assets/hero.png)
+
 > **"Data is just noise until you find the Catalyst."**  
 > Birdeye Catalyst is a highly-optimized, industrial-grade DeFi intelligence hub. It chains multiple advanced Birdeye endpoints to automate market vigilance, run complex algorithmic strategies, and deliver actionable alerts before the crowd catches up.
 
@@ -48,26 +50,64 @@ Polling Birdeye endpoints (`token_security`, `market-data`) for every single use
 - **Asynchronous Dispatching**: Generating a match and sending a Telegram notification are decoupled. Matches are bulk-loaded into **BullMQ** (backed by Redis), providing concurrent processing for thousands of potential user webhooks.
 
 ```mermaid
-graph TD
-    subgraph Data Ingestion
-        A[Birdeye V2/V3 APIs] -->|Polling| B(Global Watcher)
-    end
-    
-    subgraph Processing Pipeline
-        B -->|1. Base Payload| C{Candidate Filter}
-        C -->|Fails Base Logic| Drop[Discard]
-        C -->|Passes: >$1K Liq| D[Enrichment Phase]
-        D -->|Fetch Security/Market| A
-        D --> E[Rule Engine Evaluation]
+graph LR
+    %% Konfigürasyon: Köşeleri yuvarla ve fontu düzelt
+    %% classDef default font-family:'Inter',sans-serif,font-size:13px;
+
+    subgraph Data_Ingestion ["📥 INGESTION LAYER"]
+        direction TB
+        A[["🌐 Birdeye V2/V3"]]
+        B("👁️ Global Watcher")
+        A -->|Polling| B
     end
 
-    subgraph Dispatch & Presentation
-        E -->|Match Found| F[(MongoDB)]
-        E -->|Pub/Sub Publish| G[(Redis Cache & Pub/Sub)]
-        E -->|Add Job| H[BullMQ Worker]
-        G -->|SSE Stream| I[Next.js App Router UI]
-        H -->|Webhook| J[Telegram Actionable Alert]
+    subgraph Processing_Pipeline ["⚙️ CORE PIPELINE"]
+        direction LR
+        C{"🔍 Candidate<br/>Filter"}
+        D["💎 Enrichment<br/>Phase"]
+        E["🧠 Rule Engine<br/>Evaluation"]
+        Drop[/"🗑️ Discard"\]
+
+        C -->|Pass| D
+        C -->|Fail| Drop
+        D --> E
     end
+
+    subgraph Dispatch_Presentation ["🚀 OUTPUT & UI"]
+        direction TB
+        F[("💾 MongoDB")]
+        G[("⚡ Redis Pub/Sub")]
+        H("👷 BullMQ Worker")
+        I[["💻 Next.js UI"]]
+        J["📢 Telegram"]
+
+        G -->|SSE| I
+        H -->|Webhook| J
+    end
+
+    %% Ana Akış Bağlantıları
+    B -->|Base Payload| C
+    E -->|Save| F
+    E -->|Notify| G
+    E -->|Queue| H
+    
+    %% Geri Dönüş Oku (Estetik olması için kesikli ve ince)
+    D -.->|Re-fetch| A
+
+    %% Renk ve Stil Tanımlamaları
+    style Data_Ingestion fill:#0f172a,stroke:#334155,color:#fff
+    style Processing_Pipeline fill:#0f172a,stroke:#334155,color:#fff
+    style Dispatch_Presentation fill:#0f172a,stroke:#334155,color:#fff
+
+    classDef tech fill:#1e293b,stroke:#38bdf8,stroke-width:1px,color:#f1f5f9;
+    classDef logic fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#fff;
+    classDef db fill:#022c22,stroke:#10b981,stroke-width:1px,color:#fff;
+    classDef alert fill:#450a0a,stroke:#ef4444,stroke-width:1px,color:#fff;
+
+    class A,B,D,E,H,I tech;
+    class C logic;
+    class F,G db;
+    class J alert;
 ```
 
 ---

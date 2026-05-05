@@ -238,13 +238,20 @@ export class RuleEngine {
     let security: BirdeyeSecurityData;
     let marketData: BirdeyeMarketData | undefined;
 
-    if (preFetched) {
+    if (preFetched && preFetched.security) {
       security = preFetched.security;
       marketData = preFetched.marketData;
     } else {
-      // Fallback: Veri yoksa (manuel çağrılarda) API'ye git
-      security = await this.birdeyeService.getTokenSecurity(token.address, rule.chain);
-      marketData = await this.birdeyeService.getMarketData(token.address, rule.chain);
+      // Fallback: Veri yoksa (manuel çağrılarda veya enrichment hatasında) API'ye git
+      try {
+        security = await this.birdeyeService.getTokenSecurity(token.address, rule.chain);
+        marketData = await this.birdeyeService.getMarketData(token.address, rule.chain);
+      } catch (err) {
+        return { 
+          isMatch: false, 
+          security: { address: token.address, securityScore: 0, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 } 
+        };
+      }
     }
 
     fieldValues.security_score = security.securityScore;

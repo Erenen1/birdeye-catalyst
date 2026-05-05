@@ -240,9 +240,13 @@ export class GlobalWatcherService {
       processingPromises.push(this.ruleEngine.processRuleBatch(rule, tokens, tier, enrichmentMap));
     }
 
-    const resultsArray = await Promise.all(processingPromises);
-    for (const matches of resultsArray) {
-      allMatches.push(...matches);
+    const resultsArray = await Promise.allSettled(processingPromises);
+    for (const result of resultsArray) {
+      if (result.status === 'fulfilled') {
+        allMatches.push(...result.value);
+      } else {
+        console.error(`[GlobalWatcher] Rule processing batch failed:`, result.reason);
+      }
     }
 
     // 4. Batch Persist & Dispatch
