@@ -19,19 +19,31 @@ export class TelegramProvider implements INotificationProvider {
     const action = payload.action as TelegramAction;
     
     if (!action || !action.chatId) {
-      console.warn(`[TelegramProvider] Missing chat_id for user ${payload.userId}. Skipping notification.`);
+      console.warn(`[TelegramProvider] ⚠️ SKIP: Missing chat_id for user ${payload.userId}.`);
       return;
     }
 
     const message = this.buildMessage(payload);
     const buttons = this.buildButtons(payload);
 
-    await this.bot.sendMessage(action.chatId, message, { 
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: buttons
+    try {
+      if (payload.token.logoURI) {
+        await this.bot.sendPhoto(action.chatId, payload.token.logoURI, {
+          caption: message,
+          parse_mode: 'Markdown',
+          reply_markup: { inline_keyboard: buttons }
+        });
+      } else {
+        await this.bot.sendMessage(action.chatId, message, { 
+          parse_mode: 'Markdown',
+          reply_markup: { inline_keyboard: buttons }
+        });
       }
-    });
+      console.log(`[TelegramProvider] 📨 SENT: Message delivered to ${action.chatId} (Token: ${payload.token.symbol})`);
+    } catch (error: any) {
+      console.error(`[TelegramProvider] ❌ ERROR: Failed to send to ${action.chatId}.`, error.message);
+      throw error;
+    }
   }
 
   private buildButtons(payload: NotificationJobPayload) {

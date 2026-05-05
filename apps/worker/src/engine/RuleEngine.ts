@@ -165,7 +165,10 @@ export class RuleEngine {
 
       const allJobs = [...notificationJobs, ...marketingJobs];
       if (allJobs.length > 0) {
+        logger.info(`Dispatching ${allJobs.length} notifications (${notificationJobs.length} private, ${marketingJobs.length} public)...`, 'RuleEngine');
         await this.notificationQueue.addBulk(allJobs);
+      } else {
+        logger.debug('No notification jobs to dispatch for this batch.', 'RuleEngine');
       }
 
       // 3. Redis Caching & Real-time Pub/Sub (Optimization)

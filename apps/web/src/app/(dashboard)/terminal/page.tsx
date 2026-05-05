@@ -63,11 +63,29 @@ export default function TerminalPage() {
   };
 
 
+  const [userStatus, setUserStatus] = useState<any>(null);
+
+  const fetchUserStatus = useCallback(async () => {
+    if (!address) return;
+    try {
+      const res = await fetch(`/api/user/status?address=${address}`);
+      const data = await res.json();
+      setUserStatus(data);
+    } catch (err) {
+      console.error('[Terminal] Status error:', err);
+    }
+  }, [address]);
+
   useEffect(() => {
     fetchGlobalAlerts();
+    fetchUserStatus();
     const interval = setInterval(fetchGlobalAlerts, 30000);
     return () => clearInterval(interval);
-  }, [fetchGlobalAlerts]);
+  }, [fetchGlobalAlerts, fetchUserStatus]);
+
+  const pollingInterval = userStatus?.settings?.pollingPro && userStatus?.tier === 'pro' 
+    ? userStatus.settings.pollingPro 
+    : userStatus?.settings?.pollingFree || '4h';
 
   const formatTimeAgo = (date: any) => {
     const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -90,7 +108,6 @@ export default function TerminalPage() {
 
   return (
     <div className="space-y-6 md:space-y-10">
-
       {/* ── Header ── */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[#1c1d24] pb-6 gap-4">
         <div className="space-y-1">
@@ -102,7 +119,7 @@ export default function TerminalPage() {
         </div>
         <div className="flex items-center gap-2 text-[9px] font-mono text-mint bg-mint/5 px-3 py-1.5 border border-mint/10">
           <div className="w-1.5 h-1.5 bg-mint animate-pulse rounded-full" />
-          LIVE · {globalAlerts.length} SIGNALS · Refreshes every 30s
+          LIVE · {globalAlerts.length} SIGNALS · Refreshes every {pollingInterval}
         </div>
       </div>
 

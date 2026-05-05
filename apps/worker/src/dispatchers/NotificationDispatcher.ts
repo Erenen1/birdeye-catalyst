@@ -59,11 +59,13 @@ export class NotificationDispatcher {
 
   private setupListeners(): void {
     this.worker.on('completed', (job) => {
-      console.log(`[Dispatcher] ✅ Job ${job.id} başarıyla iletildi.`);
+      console.log(`[Dispatcher] ✅ SUCCESS: Job ${job.id} (Rule: ${job.data.ruleId}) delivered to ${job.data.userId}`);
     });
-
+    this.worker.on('error', (err) => {
+      console.error('[Dispatcher] ‼️ WORKER ERROR:', err);
+    });
     this.worker.on('failed', (job, err) => {
-      console.error(`[Dispatcher] ❌ Job ${job?.id} BAŞARISIZ. Sebeb:`, err.message);
+      console.error(`[Dispatcher] ❌ FAILED: Job ${job?.id} (Rule: ${job?.data.ruleId}). Reason: ${err.message}`);
     });
   }
 
