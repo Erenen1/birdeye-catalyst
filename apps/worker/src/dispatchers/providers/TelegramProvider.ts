@@ -77,20 +77,20 @@ export class TelegramProvider implements INotificationProvider {
       : `🚨 *Birdeye Catalyst Alarm*\n`;
 
     msg += `\n*Token:* ${token.name} (${token.symbol})\n` +
-      `*Adres:* \`${token.address}\`\n`;
+      `*Address:* \`${token.address}\`\n`;
 
     if (security.catalystScore !== undefined) {
-      msg += `*🧠 Catalyst Skoru:* ${security.catalystScore}/100\n`;
+      msg += `*🧠 Catalyst Score:* ${security.catalystScore}/100\n`;
     }
     if (security.aiPrediction) {
       const emoji = security.aiPrediction === 'BULLISH' ? '🟢' : security.aiPrediction === 'BEARISH' ? '🔴' : '🟡';
-      msg += `*🤖 AI Tahmini:* ${emoji} ${security.aiPrediction}\n`;
+      msg += `*🤖 AI Prediction:* ${emoji} ${security.aiPrediction}\n`;
     }
     
-    msg += `*🛡️ Güvenlik Skoru:* ${security.securityScore}/100\n` +
-      `*💧 Likidite:* $${token.liquidity?.toLocaleString('en-US') || 0}\n` +
-      `*📊 24h Hacim:* $${token.volume24h?.toLocaleString('en-US') || 0}\n\n` +
-      `🔗 [Birdeye'da İncele](https://birdeye.so/token/${token.address})\n\n`;
+    msg += `*🛡️ Security Score:* ${security.securityScore}/100\n` +
+      `*💧 Liquidity:* $${token.liquidity?.toLocaleString('en-US') || 0}\n` +
+      `*📊 24h Volume:* $${token.volume24h?.toLocaleString('en-US') || 0}\n\n` +
+      `🔗 [View on Birdeye](https://birdeye.so/token/${token.address})\n\n`;
 
     if (isPublic) {
       msg += `🚀 *Want this 60s faster?* Upgrade to PRO for 10s polling and real-time alerts.\n` +

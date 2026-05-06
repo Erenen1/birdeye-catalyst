@@ -89,21 +89,56 @@ export class BirdeyeService implements IBirdeyeService {
   }
 
   async getTokenSecurity(address: string, chain: string = 'solana'): Promise<BirdeyeSecurityData> {
-    // ⚠️ NOTICE: The current Birdeye API key lacks sufficient permissions for /defi/token_security.
-    // It returns 401 Unauthorized. Therefore, this call is mocked for now.
-    // See README.md for future integration plans.
-    
-    const result: BirdeyeSecurityData = {
-      address,
-      securityScore: 85, // Mocked score
-      isHoneypot: false, // Mocked value
-      isRugPull: false, // Mocked value
-      noMintAuthority: true, // Mocked value
-      noFreezeAuthority: true, // Mocked value
-      top10HolderPercent: 10, // Mocked value
-    };
+    // For non-Solana chains, RugCheck is not available — return safe defaults
+    if (chain !== 'solana') {
+      return { address, securityScore: 50, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 };
+    }
 
-    return result;
+    const cacheKey = `rugcheck:security:${address}`;
+    const cached = await this.redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    try {
+      const { data } = await axios.get(
+        `https://api.rugcheck.xyz/v1/tokens/${address}/report/summary`,
+        { timeout: 8_000 }
+      );
+
+      const risks: Array<{ name: string; level: string }> = data.risks ?? [];
+      const riskNames = risks.map((r) => r.name.toLowerCase());
+
+      // RugCheck score_normalised: 0 = perfect, 100 = very risky → invert for our 0–100 (higher = safer)
+      const rawScore: number = data.score_normalised ?? 50;
+      const securityScore = Math.max(0, Math.min(100, Math.round(100 - rawScore)));
+
+      const isHoneypot    = riskNames.some((n) => n.includes('honeypot'));
+      const isRugPull     = riskNames.some((n) => n.includes('rug') || n.includes('rugged'));
+      const hasMintRisk   = riskNames.some((n) => n.includes('mint'));
+      const hasFreezeRisk = riskNames.some((n) => n.includes('freeze'));
+
+      // top10HolderPercent: derive from "High holder concentration" risk or lpLockedPct proxy
+      const holderRisk = risks.find((r) => r.name.toLowerCase().includes('holder'));
+      const top10HolderPercent = holderRisk ? 65 : Math.max(0, 100 - (data.lpLockedPct ?? 0));
+
+      const result: BirdeyeSecurityData = {
+        address,
+        securityScore,
+        isHoneypot,
+        isRugPull,
+        noMintAuthority:   !hasMintRisk,
+        noFreezeAuthority: !hasFreezeRisk,
+        top10HolderPercent: Math.round(top10HolderPercent),
+      };
+
+      // Cache for 5 minutes
+      await this.redisClient.setEx(cacheKey, 300, JSON.stringify(result));
+      logger.info(`[RugCheck] ${address} → score=${securityScore}, mint=${hasMintRisk}, freeze=${hasFreezeRisk}`, 'BirdeyeService');
+      return result;
+    } catch (err: any) {
+      logger.warn(`[RugCheck] Failed for ${address}: ${err.message} — using safe fallback`, 'BirdeyeService');
+      // Graceful fallback — don't break the worker pipeline
+      return { address, securityScore: 50, isHoneypot: false, isRugPull: false, noMintAuthority: false, noFreezeAuthority: false, top10HolderPercent: 0 };
+    }
   }
 
   async getMarketData(address: string, chain: string = 'solana'): Promise<BirdeyeMarketData> {
