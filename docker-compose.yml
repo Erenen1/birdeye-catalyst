@@ -44,6 +44,20 @@ services:
       - chaintrigger-network
     restart: unless-stopped
 
+  ai-engine:
+    build:
+      context: ./apps/ai-engine
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    networks:
+      - chaintrigger-network
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     ports:
