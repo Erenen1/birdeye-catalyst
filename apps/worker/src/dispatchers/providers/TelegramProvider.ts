@@ -77,10 +77,19 @@ export class TelegramProvider implements INotificationProvider {
       : `🚨 *Birdeye Catalyst Alarm*\n`;
 
     msg += `\n*Token:* ${token.name} (${token.symbol})\n` +
-      `*Adres:* \`${token.address}\`\n` +
-      `*Güvenlik Skoru:* ${security.securityScore}\n` +
-      `*Likidite:* $${token.liquidity.toLocaleString('en-US')}\n` +
-      `*24h Hacim:* $${token.volume24h.toLocaleString('en-US')}\n\n` +
+      `*Adres:* \`${token.address}\`\n`;
+
+    if (security.catalystScore !== undefined) {
+      msg += `*🧠 Catalyst Skoru:* ${security.catalystScore}/100\n`;
+    }
+    if (security.aiPrediction) {
+      const emoji = security.aiPrediction === 'BULLISH' ? '🟢' : security.aiPrediction === 'BEARISH' ? '🔴' : '🟡';
+      msg += `*🤖 AI Tahmini:* ${emoji} ${security.aiPrediction}\n`;
+    }
+    
+    msg += `*🛡️ Güvenlik Skoru:* ${security.securityScore}/100\n` +
+      `*💧 Likidite:* $${token.liquidity?.toLocaleString('en-US') || 0}\n` +
+      `*📊 24h Hacim:* $${token.volume24h?.toLocaleString('en-US') || 0}\n\n` +
       `🔗 [Birdeye'da İncele](https://birdeye.so/token/${token.address})\n\n`;
 
     if (isPublic) {
