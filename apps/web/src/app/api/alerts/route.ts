@@ -32,9 +32,21 @@ export async function GET(req: NextRequest) {
     let alerts;
     if (userId === 'GLOBAL') {
       // Return the latest alerts from ANY user — this is the public feed
-      alerts = await AlertModel.find({})
+      const rawAlerts = await AlertModel.find({})
         .sort({ createdAt: -1 })
-        .limit(50);
+        .limit(200); // Fetch more to ensure we get enough unique ones
+      
+      const uniqueAlerts = [];
+      const seenTokens = new Set();
+      
+      for (const alert of rawAlerts) {
+        if (!seenTokens.has(alert.token.address)) {
+          seenTokens.add(alert.token.address);
+          uniqueAlerts.push(alert);
+          if (uniqueAlerts.length >= 50) break;
+        }
+      }
+      alerts = uniqueAlerts;
     } else {
       alerts = await AlertModel.find({ userId })
         .sort({ createdAt: -1 })

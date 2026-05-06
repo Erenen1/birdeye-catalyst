@@ -174,6 +174,7 @@ export class RuleEngine {
       // 3. Redis Caching & Real-time Pub/Sub (Optimization)
       // Use Redis Pipeline (multi) to minimize network roundtrips for batch updates
       const multi = this.redisClient.multi();
+      const uniqueGlobalTokens = new Set<string>();
 
       for (const m of allMatches) {
         const cacheKey = `alerts:user:${m.rule.userId}`;
@@ -195,10 +196,13 @@ export class RuleEngine {
         // Publish to user SSE channel
         multi.publish(channelKey, alertData);
 
-        // Global Radar Feed for Landing Page (keep last 50)
-        multi.lPush('alerts:user:GLOBAL', alertData);
-        multi.lTrim('alerts:user:GLOBAL', 0, 49);
-        multi.publish('alerts:channel:GLOBAL', alertData);
+        // Global Radar Feed for Landing Page (keep last 50) - DEDUPLICATED
+        if (!uniqueGlobalTokens.has(m.token.address)) {
+          uniqueGlobalTokens.add(m.token.address);
+          multi.lPush('alerts:user:GLOBAL', alertData);
+          multi.lTrim('alerts:user:GLOBAL', 0, 49);
+          multi.publish('alerts:channel:GLOBAL', alertData);
+        }
       }
 
       await multi.exec();

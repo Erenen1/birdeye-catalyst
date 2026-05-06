@@ -15,7 +15,7 @@ export default function MarketPage() {
     {
       id: 'AI_MOMENTUM_ENGINE',
       name: 'AI_MOMENTUM_ENGINE',
-      desc: 'Uses Deep Learning (LSTM) to predict 4H volume surges and filters out high-risk anomalies. Strictly requires Catalyst Score > 85.',
+      desc: 'Uses a Time-Series Transformer to predict 4H volume surges and filters out high-risk anomalies. Strictly requires Catalyst Score > 85.',
       risk: 'LOW',
       performance: 'PREDICTIVE',
       tags: ['Solana', 'Deep_Learning', 'AI'],

@@ -300,7 +300,7 @@ export default function Dashboard() {
               Your constraints operate with "AND" logic. Only approved opportunities are dispatched.
             </p>
             <div className="text-[8px] font-mono text-amber border border-amber/20 bg-amber/5 p-2 uppercase">
-              Now supporting AI triggers: CATALYST_SCORE &gt;= 80 AND LSTM_PREDICTION == 'BULLISH'
+              Now supporting AI triggers: CATALYST_SCORE &gt;= 80 AND AI_PREDICTION == 'BULLISH'
             </div>
           </div>
           <div className="p-4">
