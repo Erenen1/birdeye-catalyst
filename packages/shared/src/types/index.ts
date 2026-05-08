@@ -116,7 +116,6 @@ export interface NotificationJobPayload {
   security: BirdeyeSecurityData;
   marketData?: BirdeyeMarketData;
   chain: string;
-  triggerType: TriggerType;
   triggeredAt: Date;
 }
 
