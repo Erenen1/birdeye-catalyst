@@ -94,6 +94,7 @@ export interface BirdeyeSecurityData {
   top10HolderPercent?: number;
   catalystScore?: number;
   aiPrediction?: string;
+  aiConfidence?: number;
   technicalTrace?: string[];
 }
 

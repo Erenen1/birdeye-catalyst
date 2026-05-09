@@ -105,7 +105,11 @@ export class TelegramProvider implements INotificationProvider {
     }
     if (security.aiPrediction) {
       const emoji = security.aiPrediction === 'BULLISH' ? '🟢' : security.aiPrediction === 'BEARISH' ? '🔴' : '🟡';
-      msg += `*🤖 AI Prediction:* ${emoji} ${security.aiPrediction}\n`;
+      if (security.aiConfidence && security.aiConfidence > 0) {
+        msg += `*🤖 AI Prediction:* ${emoji} ${security.aiPrediction} (Accuracy: ${(security.aiConfidence * 100).toFixed(1)}%)\n`;
+      } else {
+        msg += `*🤖 AI Prediction:* ${emoji} ${security.aiPrediction}\n`;
+      }
     }
     
     msg += `*🛡️ Security Score:* ${security.securityScore}/100\n` +

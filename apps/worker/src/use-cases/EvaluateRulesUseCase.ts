@@ -11,6 +11,7 @@
  */
 
 import { Queue } from 'bullmq';
+import axios from 'axios';
 import type { IBirdeyeService } from '../interfaces/IBirdeyeService';
 import type { IRuleRepository } from '../interfaces/IRuleRepository';
 import type { IRule, BirdeyeToken, NotificationJobPayload, TriggerType } from '@chaintrigger/shared';
@@ -104,6 +105,33 @@ export class EvaluateRulesUseCase {
 
   private async enqueueNotification(rule: IRule, token: BirdeyeToken): Promise<void> {
     const security = await this.birdeyeService.getTokenSecurity(token.address);
+
+    // AI Engine Analysis Integration
+    try {
+      const aiResponse = await axios.post(`http://${process.env.AI_ENGINE_HOST || 'ai-engine:8000'}/api/v1/analyze`, {
+        token_address: token.address,
+        price_history: [], // Defaults to fallback heuristic if empty
+        volume_history: [],
+        liquidity: token.liquidity,
+        trade_count: 0,
+        security_flags: {
+          mint_authority: !security.noMintAuthority,
+          freeze_authority: !security.noFreezeAuthority,
+          is_honeypot: security.isHoneypot,
+          top10_holder_percent: security.top10HolderPercent || 0,
+          lp_burned: false
+        }
+      }, { timeout: 3000 });
+      
+      if (aiResponse.data) {
+        security.catalystScore = aiResponse.data.catalyst_score;
+        security.aiPrediction = aiResponse.data.ai_prediction;
+        security.aiConfidence = aiResponse.data.confidence;
+        security.technicalTrace = aiResponse.data.technical_trace;
+      }
+    } catch (error: any) {
+      console.warn(`[EvaluateRules] ⚠️ AI Engine analysis failed for ${token.address}: ${error.message}`);
+    }
 
     const payload: NotificationJobPayload = {
       ruleId: rule._id!,

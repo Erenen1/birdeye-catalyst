@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { ChevronRight, Zap, Activity, Shield, Globe, Cpu, Database, BarChart3, Users } from 'lucide-react';
+import { ChevronRight, ShieldCheck, Activity, Users, Radio, Send, ShieldAlert, Cpu, Database, Zap, BarChart3, Globe } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import Link from 'next/link';
@@ -45,12 +45,16 @@ export default function LandingPage() {
   const [stats, setStats] = useState([
     { label: 'ACTIVE_OPERATORS', value: '...', sub: 'Verified Wallets', icon: <Users size={16} /> },
     { label: 'DEPLOYED_NODES', value: '...', sub: 'Automation Rules', icon: <Activity size={16} /> },
-    { label: 'VOLUME_MONITORED', value: '$1.4B+', sub: 'Network Estimate', icon: <BarChart3 size={16} /> },
-    { label: 'SIGNAL_LATENCY', value: '0.4s', sub: 'Avg. Execution', icon: <Zap size={16} /> }
+    { label: 'SIGNALS_DISPATCHED', value: '...', sub: 'Routed to Telegram', icon: <Send size={16} /> },
+    { label: 'THREATS_BLOCKED', value: '...', sub: 'Scams Filtered', icon: <ShieldAlert size={16} /> }
   ]);
 
   const [activeRadarTab, setActiveRadarTab] = useState('new_listing');
   const [realAlerts, setRealAlerts] = useState<any[]>([]);
+  const [sysLogs, setSysLogs] = useState<Array<{ id: string, time: string, level: string, msg: React.ReactNode }>>([
+    { id: '1', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }), level: 'INFO', msg: 'Catalyst sequence initiated.' },
+    { id: '2', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }), level: 'INFO', msg: <>Birdeye WebSocket established: <span className="text-white">multi-chain</span></> }
+  ]);
 
   useEffect(() => {
     const fetchRealData = async () => {
@@ -67,8 +71,8 @@ export default function LandingPage() {
           setStats([
             { label: 'ACTIVE_OPERATORS', value: statsData.activeOperators.toLocaleString(), sub: 'Verified Wallets', icon: <Users size={16} /> },
             { label: 'DEPLOYED_NODES', value: statsData.deployedNodes.toLocaleString(), sub: 'Automation Rules', icon: <Activity size={16} /> },
-            { label: 'VOLUME_MONITORED', value: statsData.volumeMonitored, sub: 'Network Estimate', icon: <BarChart3 size={16} /> },
-            { label: 'SIGNAL_LATENCY', value: statsData.signalLatency, sub: 'Avg. Execution', icon: <Zap size={16} /> }
+            { label: 'SIGNALS_DISPATCHED', value: statsData.signalsDispatched.toLocaleString(), sub: 'Routed to Telegram', icon: <Send size={16} /> },
+            { label: 'THREATS_BLOCKED', value: statsData.threatsBlocked.toLocaleString(), sub: 'Scams Filtered', icon: <ShieldAlert size={16} /> }
           ]);
         }
       } catch (error) {
@@ -89,6 +93,49 @@ export default function LandingPage() {
           if (prev.some(a => a.token?.address === newAlert.token?.address && a.triggerType === newAlert.triggerType)) {
             return prev;
           }
+          
+          // Trigger Terminal Animation Sequence
+          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          
+          setSysLogs(logs => {
+            const base = logs.slice(-4); // Keep last 4 so total is 5
+            return [...base, {
+              id: Date.now().toString(),
+              time: timeStr,
+              level: 'INFO',
+              msg: <>Signal matched: <span className="text-white">{newAlert.token?.symbol || 'UNKNOWN'}</span> ({newAlert.triggerType})</>
+            }];
+          });
+
+          setTimeout(() => {
+            setSysLogs(logs => {
+              const base = logs.slice(-4);
+              const score = newAlert.security?.securityScore ?? 50;
+              const level = score < 40 ? 'WARN' : 'INFO';
+              const color = score < 40 ? 'text-amber' : 'text-mint';
+              return [...base, {
+                id: (Date.now() + 1).toString(),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                level: level,
+                msg: <>Security Score: <span className={color}>{score}/100</span></>
+              }];
+            });
+          }, 800);
+
+          setTimeout(() => {
+            setSysLogs(logs => {
+              const base = logs.slice(-4);
+              const ai = newAlert.security?.aiPrediction || 'NEUTRAL';
+              const aiColor = ai === 'BULLISH' ? 'text-mint' : ai === 'BEARISH' ? 'text-red-500' : 'text-amber';
+              return [...base, {
+                id: (Date.now() + 2).toString(),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                level: 'EXEC',
+                msg: <>AI Engine: <span className={aiColor}>{ai}</span>. Routing payload...</>
+              }];
+            });
+          }, 1600);
+
           return [newAlert, ...prev].slice(0, 50);
         });
       } catch (err) {
@@ -154,9 +201,9 @@ export default function LandingPage() {
            >
               Launch_Dashboard <ChevronRight size={14} />
            </Link>
-           <button className="text-[#4a4b52] hover:text-white font-mono text-[11px] uppercase tracking-widest border-b border-[#1c1d24] pb-1 transition-all">
+           <Link href="/docs" className="text-[#4a4b52] hover:text-white font-mono text-[11px] uppercase tracking-widest border-b border-[#1c1d24] pb-1 transition-all">
               View Documentation
-           </button>
+           </Link>
         </div>
       </div>
 
@@ -179,37 +226,21 @@ export default function LandingPage() {
             </div>
             
             {/* Terminal Body */}
-            <div className="p-4 md:p-6 font-mono text-[9px] md:text-[11px] space-y-2.5 min-h-[220px] overflow-x-hidden">
-               <div className="flex gap-2 md:gap-4 items-center">
-                  <span className="text-[#4a4b52] w-16 md:w-20 shrink-0">[14:12:05]</span>
-                  <span className="text-mint font-bold uppercase w-8 md:w-10 shrink-0">Info</span>
-                  <span className="text-[#849587] truncate sm:whitespace-normal">Catalyst sequence initiated.</span>
-               </div>
-               <div className="flex gap-2 md:gap-4 items-center">
-                  <span className="text-[#4a4b52] w-16 md:w-20 shrink-0">[14:12:06]</span>
-                  <span className="text-mint font-bold uppercase w-8 md:w-10 shrink-0">Info</span>
-                  <span className="text-[#849587] truncate sm:whitespace-normal">Birdeye WebSocket established: <span className="text-white">multi-chain</span></span>
-               </div>
-               <div className="flex gap-2 md:gap-4 items-center">
-                  <span className="text-[#4a4b52] w-16 md:w-20 shrink-0">[14:12:08]</span>
-                  <span className="text-amber font-bold uppercase w-8 md:w-10 shrink-0">Warn</span>
-                  <span className="text-[#849587] truncate sm:whitespace-normal">High volatility in <span className="text-amber">ETH/USD (Base)</span>.</span>
-               </div>
-               <div className="flex gap-2 md:gap-4 items-center">
-                  <span className="text-[#4a4b52] w-16 md:w-20 shrink-0">[14:12:12]</span>
-                  <span className="text-mint font-bold uppercase w-8 md:w-10 shrink-0">Info</span>
-                  <span className="text-[#849587] truncate sm:whitespace-normal">Filter matched: <span className="text-white">MIN_LIQ_50K</span></span>
-               </div>
-               <div className="flex gap-2 md:gap-4 items-center">
-                  <span className="text-[#4a4b52] w-16 md:w-20 shrink-0">[14:12:12]</span>
-                  <span className="text-blue-400 font-bold uppercase w-8 md:w-10 shrink-0">Exec</span>
-                  <span className="text-[#849587] truncate sm:whitespace-normal">Routing payload to Telegram...</span>
-               </div>
+            <div className="p-4 md:p-6 font-mono text-[9px] md:text-[11px] space-y-2.5 min-h-[220px] overflow-x-hidden flex flex-col justify-end">
+               {sysLogs.map((log) => (
+                 <div key={log.id} className="flex gap-2 md:gap-4 items-center animate-in slide-in-from-bottom-2 fade-in duration-300">
+                    <span className="text-[#4a4b52] w-16 md:w-20 shrink-0">[{log.time}]</span>
+                    <span className={`font-bold uppercase w-8 md:w-10 shrink-0 ${log.level === 'INFO' ? 'text-mint' : log.level === 'WARN' ? 'text-amber' : 'text-blue-400'}`}>
+                      {log.level}
+                    </span>
+                    <span className="text-[#849587] truncate sm:whitespace-normal">{log.msg}</span>
+                 </div>
+               ))}
                <div className="pt-4 border-t border-[#1c1d24] mt-4 flex justify-between items-center">
                   <div className="flex gap-4">
                      <div className="flex flex-col">
                         <span className="text-[7px] md:text-[8px] text-[#4a4b52] uppercase tracking-tighter md:tracking-normal">Packets_Sent</span>
-                        <span className="text-white">1.2k</span>
+                        <span className="text-white">{(1200 + realAlerts.length * 3).toLocaleString()}</span>
                      </div>
                      <div className="flex flex-col">
                         <span className="text-[7px] md:text-[8px] text-[#4a4b52] uppercase tracking-tighter md:tracking-normal">Latency</span>

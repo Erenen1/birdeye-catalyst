@@ -5,6 +5,10 @@ from core.feature_engineering import FeatureEngineer, AdvancedFeatureEngineer
 from core.scoring_engine import ScoringEngine
 from ml.inference import ModelPredictor
 from core.redis_client import RedisCache
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 predictor = ModelPredictor()
@@ -31,6 +35,7 @@ class AnalyzeResponse(BaseModel):
     token_address: str
     catalyst_score: float
     ai_prediction: str
+    confidence: float = 0.0
     technical_trace: List[str]
 
 class BatchAnalyzeRequest(BaseModel):
@@ -42,20 +47,25 @@ class BatchAnalyzeResponse(BaseModel):
 
 @router.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_token(payload: AnalyzeRequest):
+    logger.info(f"Received analysis request for token: {payload.token_address}")
     cached = cache.get_analysis(payload.token_address)
     if cached:
+        logger.info(f"Returning cached result for token: {payload.token_address}")
         return AnalyzeResponse(**cached)
         
     result = process_single_token(payload)
     cache.set_analysis(payload.token_address, result.model_dump(), expire_seconds=300)
+    logger.info(f"Analysis complete for token: {payload.token_address} | Score: {result.catalyst_score:.2f} | Prediction: {result.ai_prediction}")
     return result
 
 @router.post("/analyze/batch", response_model=BatchAnalyzeResponse)
 async def analyze_batch(payload: BatchAnalyzeRequest):
+    logger.info(f"Received batch analysis request for {len(payload.tokens)} tokens")
     # Process multiple tokens iteratively (or fully vectorized in a massive GPU environment)
     results = []
     for token in payload.tokens:
         results.append(process_single_token(token))
+    logger.info(f"Batch analysis complete. Processed {len(results)} tokens")
     return BatchAnalyzeResponse(results=results)
 
 def process_single_token(payload: AnalyzeRequest) -> AnalyzeResponse:
@@ -82,7 +92,7 @@ def process_single_token(payload: AnalyzeRequest) -> AnalyzeResponse:
         technical_trace.append("Accumulation: Neutral/Negative")
 
     # 2. Advanced AI Prediction (Transformer + Graph Embedding + Padding)
-    prediction = predictor.predict(
+    prediction, confidence = predictor.predict(
         price_history=payload.price_history, 
         volume_history=payload.volume_history, 
         smart_money_index=smart_money_index
@@ -107,5 +117,6 @@ def process_single_token(payload: AnalyzeRequest) -> AnalyzeResponse:
         token_address=payload.token_address,
         catalyst_score=final_score,
         ai_prediction=prediction,
+        confidence=confidence,
         technical_trace=technical_trace
     )

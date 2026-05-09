@@ -44,7 +44,7 @@ export default function MarketingLayout({
         <div className="flex items-center gap-2 md:gap-6">
           {/* Telegram Community Link */}
           <a
-            href="https://t.me/BirdeyeCatalystAlpha"
+            href="https://t.me/BirdeyeCatalyst"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 border border-[#1c1d24] text-[#4a4b52] hover:bg-[#1da1f2]/10 hover:border-[#1da1f2]/50 hover:text-[#1da1f2] transition-all group"

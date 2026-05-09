@@ -7,7 +7,7 @@ from typing import List
 from sklearn.preprocessing import StandardScaler
 from .model import CatalystTransformer
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class ModelPredictor:
@@ -42,11 +42,14 @@ class ModelPredictor:
             
         self.model.eval()
 
-    def predict(self, price_history: List[float], volume_history: List[float], smart_money_index: float) -> str:
+    def predict(self, price_history: List[float], volume_history: List[float], smart_money_index: float) -> tuple[str, float]:
+        logger.info(f"Predicting on sequences. price_len={len(price_history)}, vol_len={len(volume_history)}, smi={smart_money_index:.4f}")
         if len(price_history) == 0 or len(volume_history) == 0:
-            return "NEUTRAL"
+            logger.info("Empty sequences provided. Returning NEUTRAL.")
+            return "NEUTRAL", 0.0
 
         if not self.is_trained:
+            logger.info("Model not trained, using fallback heuristic.")
             return self._fallback_heuristic(price_history, volume_history, smart_money_index)
 
         # Truncate if too long, else we will pad
@@ -90,14 +93,18 @@ class ModelPredictor:
 
         with torch.no_grad():
             outputs = self.model(sequence_tensor, padding_mask, dummy_graph_embedding)
-            _, predicted_idx = torch.max(outputs.data, 1)
+            probabilities = torch.softmax(outputs.data, dim=1)
+            max_prob, predicted_idx = torch.max(probabilities, 1)
             predicted_class_idx = predicted_idx.item()
+            confidence = max_prob.item()
 
-        return self.CLASSES[predicted_class_idx]
+        prediction = self.CLASSES[predicted_class_idx]
+        logger.info(f"Transformer model predicted: {prediction} with confidence {confidence*100:.1f}%")
+        return prediction, float(confidence)
 
-    def _fallback_heuristic(self, price_history: List[float], volume_history: List[float], smart_money_index: float) -> str:
+    def _fallback_heuristic(self, price_history: List[float], volume_history: List[float], smart_money_index: float) -> tuple[str, float]:
         if len(price_history) < 2: 
-            return "NEUTRAL"
+            return "NEUTRAL", 0.0
             
         from core.feature_engineering import AdvancedFeatureEngineer
         rsi, macd, _ = AdvancedFeatureEngineer.calculate_technical_indicators(np.array(price_history), np.array(volume_history))
@@ -106,10 +113,13 @@ class ModelPredictor:
         current_macd = macd[-1]
         
         if current_rsi < 35 and current_macd > 0 and smart_money_index > 0.05:
-            return "BULLISH"
+            result = "BULLISH"
         elif current_rsi > 75 and smart_money_index < 0.01:
-            return "BEARISH"
+            result = "BEARISH"
         elif smart_money_index > 0.1: 
-            return "HIGH_RISK"
+            result = "HIGH_RISK"
+        else:
+            result = "NEUTRAL"
             
-        return "NEUTRAL"
+        logger.info(f"Fallback heuristic determined: {result} (RSI={current_rsi:.2f}, MACD={current_macd:.4f})")
+        return result, 0.0
