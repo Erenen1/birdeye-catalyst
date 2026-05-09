@@ -135,6 +135,7 @@ export class RuleEngine {
             security: m.security,
             marketData: m.marketData,
             chain: m.rule.chain,
+            triggerType: m.rule.triggerType,
             triggeredAt: new Date()
           } as NotificationJobPayload,
           opts: {
@@ -155,6 +156,7 @@ export class RuleEngine {
             security: m.security,
             marketData: m.marketData,
             chain: m.rule.chain,
+            triggerType: m.rule.triggerType,
             triggeredAt: new Date()
           } as NotificationJobPayload,
           opts: {

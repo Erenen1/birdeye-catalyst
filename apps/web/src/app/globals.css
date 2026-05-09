@@ -93,7 +93,17 @@
 }
 
 /* Custom Scrollbar */
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: #0a0b10; }
 ::-webkit-scrollbar-thumb { background: #1c1d24; }
 ::-webkit-scrollbar-thumb:hover { background: #00ff9f; }
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

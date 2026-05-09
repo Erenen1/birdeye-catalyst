@@ -227,16 +227,16 @@ export default function LandingPage() {
       </div>
 
       {/* Live Intelligence Radar */}
-      <div className="max-w-6xl mx-auto w-full px-6 py-24 border-t border-[#1c1d24] relative z-10">
-         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-12">
+      <div className="max-w-6xl mx-auto w-full px-4 md:px-6 py-16 md:py-24 border-t border-[#1c1d24] relative z-10">
+         <div className="flex flex-col gap-6 mb-8 md:mb-12">
             <div className="space-y-2">
-               <h2 className="text-xl font-bold text-white uppercase tracking-tighter flex items-center gap-2">
-                  <Activity size={20} className="text-mint" /> LIVE_INTELLIGENCE_RADAR
+               <h2 className="text-lg md:text-xl font-bold text-white uppercase tracking-tighter flex items-center gap-2">
+                  <Activity size={18} className="text-mint" /> LIVE_INTELLIGENCE_RADAR
                </h2>
-               <p className="text-[11px] font-mono text-[#4a4b52] uppercase">Cross-chain event monitoring in real-time.</p>
+               <p className="text-[10px] md:text-[11px] font-mono text-[#4a4b52] uppercase">Cross-chain event monitoring in real-time.</p>
             </div>
-            
-            <div className="flex bg-[#08090d] border border-[#1c1d24] p-1">
+            {/* Scrollable tab row on mobile */}
+            <div className="flex overflow-x-auto scrollbar-hide bg-[#08090d] border border-[#1c1d24] p-1 gap-0">
                {[
                  { id: 'new_listing', label: 'NEW_LISTINGS' },
                  { id: 'pump_fun_migration', label: 'PUMP_FUN' },
@@ -245,7 +245,7 @@ export default function LandingPage() {
                   <button 
                      key={tab.id}
                      onClick={() => setActiveRadarTab(tab.id)}
-                     className={`px-4 py-2 text-[9px] font-bold uppercase tracking-widest transition-all ${activeRadarTab === tab.id ? 'bg-mint text-black' : 'text-[#4a4b52] hover:text-white'}`}
+                     className={`shrink-0 px-3 md:px-4 py-2 text-[9px] font-bold uppercase tracking-widest transition-all ${activeRadarTab === tab.id ? 'bg-mint text-black' : 'text-[#4a4b52] hover:text-white'}`}
                   >
                      {tab.label}
                   </button>
@@ -254,51 +254,78 @@ export default function LandingPage() {
          </div>
 
          <div className="border border-[#1c1d24] bg-black/40 backdrop-blur-sm overflow-hidden">
-            <div className="grid grid-cols-5 bg-[#08090d] border-b border-[#1c1d24] px-6 py-3 text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest">
+            {/* Desktop table header — hidden on mobile */}
+            <div className="hidden md:grid grid-cols-5 bg-[#08090d] border-b border-[#1c1d24] px-6 py-3 text-[9px] font-mono text-[#4a4b52] uppercase tracking-widest">
                <span>Timestamp</span>
                <span className="col-span-2">Event_Details</span>
                <span>Metrics</span>
-               <span className="text-right">Action</span>
+               <span className="text-right">Status</span>
             </div>
             <div className="divide-y divide-[#1c1d24]">
                 {getRadarData(activeRadarTab).length > 0 ? (
                   getRadarData(activeRadarTab).map((row, i) => (
-                     <div key={i} className="grid grid-cols-5 px-6 py-4 items-center animate-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
-                        <span className="text-[10px] font-mono text-[#4a4b52]">{row.time}</span>
-                        <div className="col-span-2 flex items-center gap-3">
-                           <div className={`w-1.5 h-1.5 rounded-full ${row.status === 'IGNORE' ? 'bg-red-500' : 'bg-mint'} animate-pulse shrink-0`}></div>
-                           <div className="w-5 h-5 border border-[#1c1d24] flex items-center justify-center bg-[#0c0d12] text-mint font-bold text-[8px] shrink-0 overflow-hidden">
+                     <div key={i} className="animate-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
+                        {/* Mobile card layout */}
+                        <div className="flex md:hidden items-center gap-3 px-4 py-3">
+                           <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${row.status === 'IGNORE' ? 'bg-red-500' : 'bg-mint'} animate-pulse`}></div>
+                           <div className="w-7 h-7 border border-[#1c1d24] flex items-center justify-center bg-[#0c0d12] text-mint font-bold text-[9px] shrink-0 overflow-hidden">
                              {row.logoURI ? (
                                <img src={row.logoURI} alt={row.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                              ) : (
                                (row.name || '?')[0]
                              )}
                            </div>
-                           <span className="text-[11px] font-bold text-white font-mono">{row.name}</span>
-                           {row.network && <span className="text-[8px] px-1 border border-[#1c1d24] text-[#4a4b52]">{row.network}</span>}
-                        </div>
-                        <span className="text-[10px] font-mono text-mint">
-                           {row.liq}
-                        </span>
-                        <div className="text-right">
-                           <span className={`text-[9px] font-bold font-mono px-2 py-0.5 border ${row.status === 'IGNORE' ? 'border-red-500/20 text-red-500' : 'border-mint/20 text-mint uppercase'}`}>
-                              {row.status}
+                           <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-2">
+                               <span className="text-[11px] font-bold text-white font-mono truncate">{row.name}</span>
+                               {row.network && <span className="text-[8px] px-1 border border-[#1c1d24] text-[#4a4b52] shrink-0">{row.network}</span>}
+                             </div>
+                             <div className="flex gap-3 mt-0.5">
+                               <span className="text-[9px] font-mono text-[#4a4b52]">{row.time}</span>
+                               <span className="text-[9px] font-mono text-mint">{row.liq}</span>
+                             </div>
+                           </div>
+                           <span className={`text-[8px] font-bold font-mono px-2 py-0.5 border shrink-0 ${row.status === 'IGNORE' ? 'border-red-500/20 text-red-500' : 'border-mint/20 text-mint uppercase'}`}>
+                             {row.status}
                            </span>
+                        </div>
+                        {/* Desktop row layout */}
+                        <div className="hidden md:grid grid-cols-5 px-6 py-4 items-center">
+                           <span className="text-[10px] font-mono text-[#4a4b52]">{row.time}</span>
+                           <div className="col-span-2 flex items-center gap-3">
+                              <div className={`w-1.5 h-1.5 rounded-full ${row.status === 'IGNORE' ? 'bg-red-500' : 'bg-mint'} animate-pulse shrink-0`}></div>
+                              <div className="w-5 h-5 border border-[#1c1d24] flex items-center justify-center bg-[#0c0d12] text-mint font-bold text-[8px] shrink-0 overflow-hidden">
+                                {row.logoURI ? (
+                                  <img src={row.logoURI} alt={row.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                                ) : (
+                                  (row.name || '?')[0]
+                                )}
+                              </div>
+                              <span className="text-[11px] font-bold text-white font-mono">{row.name}</span>
+                              {row.network && <span className="text-[8px] px-1 border border-[#1c1d24] text-[#4a4b52]">{row.network}</span>}
+                           </div>
+                           <span className="text-[10px] font-mono text-mint">{row.liq}</span>
+                           <div className="text-right">
+                              <span className={`text-[9px] font-bold font-mono px-2 py-0.5 border ${row.status === 'IGNORE' ? 'border-red-500/20 text-red-500' : 'border-mint/20 text-mint uppercase'}`}>
+                                 {row.status}
+                              </span>
+                           </div>
                         </div>
                      </div>
                   ))
                 ) : (
-                 <div className="px-6 py-12 text-center">
-                    <span className="text-[10px] font-mono text-[#4a4b52] uppercase tracking-[0.2em]">No_live_signals_detected_in_this_sector</span>
+                 <div className="px-4 md:px-6 py-10 md:py-12 text-center">
+                    <span className="text-[10px] font-mono text-[#4a4b52] uppercase tracking-[0.1em] md:tracking-[0.2em]">No_live_signals_detected</span>
                  </div>
                )}
             </div>
-            <div className="bg-[#08090d]/50 px-6 py-3 border-t border-[#1c1d24] flex justify-between items-center">
+            <div className="bg-[#08090d]/50 px-4 md:px-6 py-3 border-t border-[#1c1d24] flex justify-between items-center">
                <div className="flex items-center gap-2">
                   <div className="flex gap-1">
                      {[...Array(3)].map((_, i) => <div key={i} className="w-1 h-1 bg-mint/40"></div>)}
                   </div>
-                  <span className="text-[8px] font-mono text-[#4a4b52] uppercase">Synchronizing with Birdeye Mesh...</span>
+                  <span className="text-[8px] font-mono text-[#4a4b52] uppercase hidden sm:inline">Synchronizing with Birdeye Mesh...</span>
+                  <span className="text-[8px] font-mono text-[#4a4b52] uppercase sm:hidden">Syncing...</span>
                </div>
                <span className="text-[8px] font-mono text-mint animate-pulse">RADAR_CONNECTED</span>
             </div>
@@ -306,7 +333,7 @@ export default function LandingPage() {
       </div>
 
       {/* How it Works - Technical Pipeline */}
-      <div className="max-w-6xl mx-auto w-full px-6 py-24 border-t border-[#1c1d24] relative z-10">
+      <div className="max-w-6xl mx-auto w-full px-4 md:px-6 py-16 md:py-24 border-t border-[#1c1d24] relative z-10">
          <div className="mb-16">
             <h2 className="text-xl font-bold text-white uppercase tracking-tighter flex items-center gap-2">
                <Cpu size={20} className="text-mint" /> TECHNICAL_PIPELINE
@@ -338,9 +365,9 @@ export default function LandingPage() {
       </div>
 
       {/* Blueprint Market Preview */}
-      <div className="bg-[#08090d] border-y border-[#1c1d24] py-24 relative z-10">
-         <div className="max-w-6xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
+      <div className="bg-[#08090d] border-y border-[#1c1d24] py-16 md:py-24 relative z-10">
+         <div className="max-w-6xl mx-auto px-4 md:px-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-8 mb-8 md:mb-16">
                <div className="space-y-2">
                   <h2 className="text-xl font-bold text-white uppercase tracking-tighter flex items-center gap-2">
                      <Globe size={20} className="text-mint" /> BLUEPRINT_REPOSITORY
@@ -375,7 +402,7 @@ export default function LandingPage() {
       </div>
 
       {/* Network Analytics - High Fidelity Stats */}
-      <div className="max-w-6xl mx-auto w-full px-6 py-24 relative z-10">
+      <div className="max-w-6xl mx-auto w-full px-4 md:px-6 py-16 md:py-24 relative z-10">
          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
             {stats.map((stat) => (
                <div key={stat.label} className="space-y-3">
@@ -393,7 +420,7 @@ export default function LandingPage() {
       </div>
 
       {/* Footer / CTA / Disclaimer */}
-      <div className="border-t border-[#1c1d24] py-16 px-6 relative z-10">
+      <div className="border-t border-[#1c1d24] py-12 md:py-16 px-4 md:px-6 relative z-10">
          <div className="max-w-6xl mx-auto flex flex-col items-center">
             <p className="text-[9px] font-mono text-[#4a4b52] uppercase tracking-[0.3em] mb-8">Ready_to_initialize_sequence?</p>
             <Link 

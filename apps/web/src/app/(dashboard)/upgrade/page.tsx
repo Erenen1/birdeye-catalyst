@@ -32,29 +32,47 @@ export default function UpgradePage() {
   const isPro = userStatus?.tier === 'pro';
 
   const copyReferral = async () => {
-    if (!referralUrl) return;
-    
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(referralUrl);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = referralUrl;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        textArea.style.top = "0";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
-      
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
+    if (!referralUrl) {
+      setError('Referral link not yet loaded. Please wait.');
+      setTimeout(() => setError(null), 3000);
+      return;
     }
+    
+    // Layer 1: Modern Clipboard API (requires HTTPS or localhost)
+    if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(referralUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+        return;
+      } catch {
+        // Fall through to legacy method
+      }
+    }
+
+    // Layer 2: Legacy execCommand fallback (works in older browsers / non-HTTPS)
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = referralUrl;
+      textArea.setAttribute('readonly', '');
+      textArea.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const success = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+        return;
+      }
+    } catch {
+      // Fall through to error
+    }
+
+    // Layer 3: Both failed — tell the user to copy manually
+    setError('Auto-copy failed. Please select the link and copy manually.');
+    setTimeout(() => setError(null), 4000);
   };
 
   return (
@@ -206,6 +224,7 @@ export default function UpgradePage() {
                     type="text" 
                     readOnly 
                     value={referralUrl || 'INITIALIZING_CODE...'}
+                    onClick={(e) => referralUrl && (e.target as HTMLInputElement).select()}
                     className="w-full bg-black/40 border border-[#1c1d24] border-r-0 px-5 py-4 text-[11px] font-mono text-mint/80 focus:outline-none transition-all group-hover/copy:border-mint/30"
                   />
                   {!referralUrl && (
@@ -215,6 +234,7 @@ export default function UpgradePage() {
                   )}
                 </div>
                 <button 
+                  type="button"
                   onClick={copyReferral}
                   className={cn(
                     "px-8 font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 border",
