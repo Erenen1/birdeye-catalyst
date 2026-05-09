@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { ChevronRight, ShieldCheck, Activity, Users, Radio, Send, ShieldAlert, Cpu, Database, Zap, BarChart3, Globe } from 'lucide-react';
+import { ChevronRight, ShieldCheck, Shield, Activity, Users, Radio, Send, ShieldAlert, Cpu, Database, Zap, BarChart3, Globe } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import Link from 'next/link';
