@@ -37,9 +37,9 @@ export default function LandingPage() {
   ];
 
   const blueprints = [
-    { name: 'PUMP_ALPHA', tag: 'HIGH_RISK', perf: '12x AVG' },
-    { name: 'SAFE_HARBOR', tag: 'LOW_RISK', perf: '1.5x AVG' },
-    { name: 'WHALE_WATCH', tag: 'MED_RISK', perf: '4x AVG' }
+    { name: 'PUMP_ALPHA', tag: 'HIGH_RISK', desc: 'Detects token liquidity migration and early price discovery phases.' },
+    { name: 'SAFE_HARBOR', tag: 'LOW_RISK', desc: 'Filters tokens securely via >80 AI score and locked liquidity.' },
+    { name: 'WHALE_WATCH', tag: 'MED_RISK', desc: 'Monitors abnormal holder concentration and massive initial buys.' }
   ];
 
   const [stats, setStats] = useState([
@@ -421,10 +421,9 @@ export default function LandingPage() {
                      </div>
                      <div className="space-y-4">
                         <div className="h-px w-full bg-[#1c1d24]"></div>
-                        <div className="flex justify-between items-center">
-                           <span className="text-[8px] font-mono text-[#4a4b52] uppercase">Success_Rate</span>
-                           <span className="text-[10px] font-mono text-amber font-bold">{bp.perf}</span>
-                        </div>
+                        <p className="text-[10px] text-[#849587] font-mono leading-relaxed h-10">
+                           {bp.desc}
+                        </p>
                      </div>
                   </div>
                ))}
