@@ -23,7 +23,7 @@ export class TelegramBotService {
       
       if (!verificationToken) {
         console.log(`[TelegramBot] 👋 Simple start from ${chatId}`);
-        await this.bot.sendMessage(chatId, '👋 *Welcome to Birdeye Catalyst!*\n\nTo link your account, please use the "Connect Telegram" button on the dashboard.', { parse_mode: 'Markdown' });
+        await this.bot.sendMessage(chatId, '👋 *Welcome to Catalyst Terminal!*\n\nTo link your account, please use the "Connect Telegram" button on the dashboard.', { parse_mode: 'Markdown' });
         return;
       }
 

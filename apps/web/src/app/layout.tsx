@@ -3,8 +3,8 @@ import "./globals.css";
 import { Web3Provider } from "@/providers/Web3Provider";
 
 export const metadata: Metadata = {
-  title: "Birdeye Catalyst | Intelligent Event Automation",
-  description: "Autonomous DeFi Event Router powered by Birdeye",
+  title: "Catalyst Terminal | Intelligent Solana Event Automation",
+  description: "Real-time Solana token intelligence, automated alerts, and on-chain signal detection.",
   icons: {
     icon: "/icon.png",
   },

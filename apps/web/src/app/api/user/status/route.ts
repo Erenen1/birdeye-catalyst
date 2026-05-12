@@ -16,14 +16,14 @@ export async function GET(request: Request) {
     await dbConnect();
 
     const refCode = searchParams.get('ref')?.substring(0, 12).replace(/[^a-zA-Z0-9]/g, '');
-    let user = await UserModel.findOne({ walletAddress: address.toLowerCase() });
+    let user = await UserModel.findOne({ walletAddress: address });
     
     if (!user) {
       // Generate unique referral code for NEW user
       const myRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       
       user = await UserModel.create({
-        walletAddress: address.toLowerCase(),
+        walletAddress: address,
         tier: 'free',
         activeRuleCount: 0,
         referralCode: myRefCode,

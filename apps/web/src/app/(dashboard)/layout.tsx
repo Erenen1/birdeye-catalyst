@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { WalletConnect } from '@/components/features/WalletConnect';
 import { TelegramConnectButton } from '@/components/features/TelegramConnectButton';
-import { useAccount } from 'wagmi';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 export default function DashboardLayout({
   children,
@@ -14,7 +14,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const { address, isConnected, isConnecting } = useAccount();
+  const { publicKey, connected: isConnected, connecting: isConnecting } = useWallet();
+  const address = publicKey?.toBase58();
   const router = useRouter();
   const [ruleCount, setRuleCount] = useState(0);
   const [userStatus, setUserStatus] = useState<any>(null);
@@ -139,7 +140,7 @@ export default function DashboardLayout({
             <div className="w-4 h-4 md:w-5 md:h-5 bg-mint rotate-45 flex items-center justify-center">
                <div className="w-2 md:w-2.5 h-2 md:h-2.5 bg-black -rotate-45"></div>
             </div>
-            <h1 className="text-xs md:text-sm font-bold tracking-[0.1em] md:tracking-[0.2em] text-mint uppercase">Catalyst</h1>
+            <h1 className="text-xs md:text-sm font-bold tracking-[0.1em] md:tracking-[0.2em] text-mint uppercase">Catalyst Terminal</h1>
             {isPro && (
               <span className="ml-2 px-2 py-0.5 bg-amber/10 border border-amber/30 text-amber text-[8px] font-bold uppercase tracking-widest">PRO</span>
             )}

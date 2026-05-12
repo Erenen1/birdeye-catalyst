@@ -121,8 +121,8 @@ export class TelegramProvider implements INotificationProvider {
     const impactLevel = volLiqRatio > 5 ? 'EXTREME' : volLiqRatio > 1 ? 'HIGH' : 'NORMAL';
 
     const header = isPublic 
-      ? `📢 **BIRDEYE GLOBAL ALPHA FEED**\n` 
-      : `🚨 **Birdeye Catalyst Alarm**\n`;
+      ? `📢 **CATALYST TERMINAL — GLOBAL ALPHA FEED**\n` 
+      : `🚨 **Catalyst Terminal Alert**\n`;
 
     const triggerInfo = `${triggerEmoji[triggerType] || '🔔'} **${triggerLabel[triggerType] || triggerType}** [${chain.toUpperCase()}]${synergyTag}\n\n`;
 

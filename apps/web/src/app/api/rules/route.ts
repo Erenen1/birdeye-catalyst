@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId')?.toLowerCase();
+    const userId = searchParams.get('userId');
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
@@ -50,13 +50,13 @@ export async function POST(request: Request) {
     // if (session.user.address !== userId) return forbidden;
 
     // 3. Check User Tier & Limits
-    const user = await UserModel.findOne({ walletAddress: userId.toLowerCase() });
+    const user = await UserModel.findOne({ walletAddress: userId });
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const currentCount = await RuleModel.countDocuments({ 
-      userId: userId.toLowerCase(), 
+      userId: userId, 
       isActive: true 
     });
     const limit = user.tier === 'pro' ? 50 : FREE_TIER_RULE_LIMIT;
@@ -73,12 +73,12 @@ export async function POST(request: Request) {
       conditions,
       action,
       chain: chain || 'solana',
-      userId: userId.toLowerCase(),
+      userId: userId,
       isActive: true,
     });
 
     // 4. Referral Reward Logic (Trigger on first node deployment + Telegram linked)
-    const ruleCount = await RuleModel.countDocuments({ userId: userId.toLowerCase() });
+    const ruleCount = await RuleModel.countDocuments({ userId: userId });
     
     // Safety Check: Has this Telegram account ever claimed a reward before?
     const isTelegramUsed = await UserModel.findOne({ 
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
 
     // Update user's count
     await UserModel.findOneAndUpdate(
-      { walletAddress: userId.toLowerCase() },
+      { walletAddress: userId },
       { $inc: { activeRuleCount: 1 } }
     );
 

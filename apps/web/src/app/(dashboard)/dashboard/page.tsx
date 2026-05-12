@@ -7,7 +7,7 @@ import { IRule } from '@chaintrigger/shared';
 import RuleForm from '@/components/features/RuleForm';
 import DeleteConfirmModal from '@/components/features/DeleteConfirmModal';
 import SecurityModal from '@/components/features/SecurityModal';
-import { useAccount } from 'wagmi';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 function formatTimeAgo(date?: Date | string) {
   if (!date) return 'NEVER';
@@ -27,7 +27,8 @@ function formatTimeAgo(date?: Date | string) {
 }
 
 export default function Dashboard() {
-  const { address, isConnected } = useAccount();
+  const { publicKey, connected: isConnected } = useWallet();
+  const address = publicKey?.toBase58();
   const router = useRouter();
   const [rules, setRules] = useState<IRule[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);

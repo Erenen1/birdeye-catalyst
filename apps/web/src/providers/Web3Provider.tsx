@@ -1,61 +1,44 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  getDefaultConfig,
-  RainbowKitProvider,
-  darkTheme,
-} from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
+  ConnectionProvider,
+  WalletProvider,
+} from '@solana/wallet-adapter-react';
 import {
-  mainnet,
-  arbitrum,
-  polygon,
-  optimism,
-  base,
-} from 'wagmi/chains';
-import {
-  QueryClientProvider,
-  QueryClient,
-} from "@tanstack/react-query";
-
-import '@rainbow-me/rainbowkit/styles.css';
-
-import { http } from 'viem';
-
-const config = getDefaultConfig({
-  appName: 'Birdeye Catalyst',
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '044601f65214832475170d743a6d45b3',
-  chains: [mainnet, arbitrum, polygon, optimism, base],
-  ssr: true,
-  transports: {
-    [mainnet.id]: http('https://cloudflare-eth.com'),
-    [arbitrum.id]: http(),
-    [polygon.id]: http(),
-    [optimism.id]: http(),
-    [base.id]: http(),
-  },
-});
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+  BackpackWalletAdapter,
+  TorusWalletAdapter,
+  CoinbaseWalletAdapter,
+} from '@solana/wallet-adapter-wallets';
+import { clusterApiUrl } from '@solana/web3.js';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
 
+// Solana mainnet RPC endpoint
+const SOLANA_RPC = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
+
 export function Web3Provider({ children }: { children: React.ReactNode }) {
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+      new BackpackWalletAdapter(),
+      new TorusWalletAdapter(),
+      new CoinbaseWalletAdapter(),
+    ],
+    []
+  );
+
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          locale="en-US"
-          theme={darkTheme({
-            accentColor: '#00ff9f',
-            accentColorForeground: 'black',
-            borderRadius: 'small',
-            fontStack: 'system',
-            overlayBlur: 'small',
-          })}
-        >
+    <ConnectionProvider endpoint={SOLANA_RPC}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <QueryClientProvider client={queryClient}>
           {children}
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+        </QueryClientProvider>
+      </WalletProvider>
+    </ConnectionProvider>
   );
 }

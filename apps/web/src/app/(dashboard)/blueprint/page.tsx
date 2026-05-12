@@ -1,12 +1,13 @@
 'use client';
 
-import { useAccount } from 'wagmi';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Database, Search, Filter, ArrowRight, Loader2, Crown } from 'lucide-react';
 
 export default function MarketPage() {
-  const { address } = useAccount();
+  const { publicKey } = useWallet();
+  const address = publicKey?.toBase58();
   const router = useRouter();
   const [deploying, setDeploying] = useState<string | null>(null);
   const [confirmingBlueprint, setConfirmingBlueprint] = useState<typeof blueprints[0] | null>(null);

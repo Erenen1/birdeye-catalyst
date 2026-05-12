@@ -13,7 +13,7 @@ import type { IUserRepository } from '../interfaces/IUserRepository';
 export class MongoUserRepository implements IUserRepository {
   async findByWalletAddress(walletAddress: string): Promise<IUser | null> {
     const user = await UserModel.findOne({
-      walletAddress: walletAddress.toLowerCase(),
+      walletAddress: walletAddress,
     })
       .lean()
       .exec();
@@ -23,8 +23,8 @@ export class MongoUserRepository implements IUserRepository {
   async findOrCreate(walletAddress: string): Promise<IUser> {
     // upsert: true → bulunamazsa oluşturur; new: true → güncel dokümanı döner
     const user = await UserModel.findOneAndUpdate(
-      { walletAddress: walletAddress.toLowerCase() },
-      { $setOnInsert: { walletAddress: walletAddress.toLowerCase() } },
+      { walletAddress: walletAddress },
+      { $setOnInsert: { walletAddress: walletAddress } },
       { upsert: true, new: true, lean: true }
     ).exec();
     return user as unknown as IUser;

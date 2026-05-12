@@ -17,12 +17,12 @@ export async function POST(request: Request) {
     const token = `verify_${Math.random().toString(36).substring(2, 10)}`;
 
     await UserModel.findOneAndUpdate(
-      { walletAddress: address.toLowerCase() },
+      { walletAddress: address },
       { telegramVerificationToken: token },
       { upsert: true, new: true }
     );
 
-    const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'BirdeyeCatalystBot';
+    const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'CatalystTerminalBot';
     const link = `https://t.me/${botUsername}?start=${token}`;
 
     return NextResponse.json({ link, token });

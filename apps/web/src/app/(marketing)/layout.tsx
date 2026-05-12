@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { WalletConnect } from '@/components/features/WalletConnect';
-import { useAccount } from 'wagmi';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useEffect } from 'react';
 
 export default function MarketingLayout({
@@ -12,8 +11,7 @@ export default function MarketingLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connected: isConnected } = useWallet();
   const router = useRouter();
 
   // Cüzdan bağlandığında otomatik dashboard'a yönlendir
@@ -24,9 +22,9 @@ export default function MarketingLayout({
   }, [isConnected, router]);
 
   const handleLaunchClick = (e: React.MouseEvent) => {
+    // WalletConnect component handles the modal now
     if (!isConnected) {
       e.preventDefault();
-      openConnectModal?.();
     }
   };
 
@@ -38,17 +36,17 @@ export default function MarketingLayout({
           <div className="w-5 h-5 bg-mint rotate-45 flex items-center justify-center shrink-0">
              <div className="w-2.5 h-2.5 bg-black -rotate-45"></div>
           </div>
-          <h1 className="text-xs md:text-sm font-bold tracking-[0.1em] md:tracking-[0.2em] text-mint uppercase truncate">Birdeye_Catalyst</h1>
+          <h1 className="text-xs md:text-sm font-bold tracking-[0.1em] md:tracking-[0.2em] text-mint uppercase truncate">Catalyst_Terminal</h1>
         </div>
 
         <div className="flex items-center gap-2 md:gap-6">
           {/* Telegram Community Link */}
           <a
-            href="https://t.me/BirdeyeCatalyst"
+            href="https://t.me/CatalystTerminal"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 border border-[#1c1d24] text-[#4a4b52] hover:bg-[#1da1f2]/10 hover:border-[#1da1f2]/50 hover:text-[#1da1f2] transition-all group"
-            title="Join the Birdeye Catalyst Alpha Channel"
+            title="Join the Catalyst Terminal Alpha Channel"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

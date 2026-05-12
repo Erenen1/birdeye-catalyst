@@ -151,7 +151,7 @@ export class RuleEngine {
           data: {
             ruleId: 'GLOBAL_ALPHA_FEED',
             userId: 'PUBLIC',
-            action: { type: 'telegram', chatId: process.env.PUBLIC_CHANNEL_ID || '@BirdeyeCatalystAlpha' } as any,
+            action: { type: 'telegram', chatId: process.env.PUBLIC_CHANNEL_ID || '@CatalystTerminalAlpha' } as any,
             token: m.token,
             security: m.security,
             marketData: m.marketData,

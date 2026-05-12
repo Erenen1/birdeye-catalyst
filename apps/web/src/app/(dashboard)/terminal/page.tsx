@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount } from 'wagmi';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
 import { Activity, Shield, Droplets, Clock } from 'lucide-react';
 import SecurityModal from '@/components/features/SecurityModal';
 
 export default function TerminalPage() {
-  const { address } = useAccount();
+  const { publicKey } = useWallet();
+  const address = publicKey?.toBase58();
   const router = useRouter();
   const [globalAlerts, setGlobalAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

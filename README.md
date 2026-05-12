@@ -1,5 +1,8 @@
-# Birdeye Catalyst
-**The Ultimate On-Chain Sentinel & Automated Strategy Engine**
+# Birdeye Catalyst 🦅
+**The AI-Agentic Intelligence Terminal for the Solana Frontier**
+
+[![Superteam Turkey](https://img.shields.io/badge/Superteam-Turkey-FFD700?style=for-the-badge&logo=solana)](https://superteam.fun)
+[![Colosseum Hackathon](https://img.shields.io/badge/Colosseum-Frontier_2026-9945FF?style=for-the-badge&logo=solana)](https://colosseum.org)
 
 [![Birdeye API](https://img.shields.io/badge/Birdeye-API_V3-00ffa3?style=for-the-badge&logo=birdeye)](https://birdeye.so)
 [![Next.js](https://img.shields.io/badge/Next.js_14-000000?style=for-the-badge&logo=next.js)](https://nextjs.org)
@@ -10,22 +13,22 @@
 ![Birdeye Catalyst Hero](assets/hero.png)
 
 > **"Data is just noise until you find the Catalyst."**  
-> Birdeye Catalyst is a highly-optimized, industrial-grade DeFi intelligence hub. It chains multiple advanced Birdeye endpoints to automate market vigilance, run complex algorithmic strategies, and deliver actionable alerts before the crowd catches up.
+> Birdeye Catalyst is an industrial-grade, AI-agentic intelligence hub built for the **Solana Frontier**. By chaining high-fidelity Birdeye V3 data with custom Transformer-based AI, it automates alpha discovery, security auditing, and strategy execution—delivering institutional-grade insights to retail traders before the crowd catches up.
 
 ---
 
 ## 💎 The Market Opportunity & Core Vision
 
-### The Problem: The Speed and Noise of DeFi
-The crypto ecosystem, particularly Solana, moves at a breakneck pace. With thousands of tokens launching daily via Pump.fun and Raydium, the market suffers from massive **Information Overload**. Retail traders are fighting algorithms and losing sleep trying to manually monitor charts, verify security contracts, and catch volume spikes. The current analytical tools are passive—they require the user to actively stare at them.
+### The Problem: The Solana Noise Floor
+Solana is the most active retail chain in existence. With thousands of tokens launching daily via **Pump.fun** and migrating to **Raydium**, the ecosystem suffers from massive **Information Overload**. Traders are losing to MEV bots and "rug pulls" while manually monitoring Telegram groups and Solscan. Existing tools are passive; they don't *think*, they just *display*.
 
 ### The Solution: Automated, Personalized Vigilance
 Birdeye Catalyst is not just another dashboard; it is an **execution-ready intelligence network**. It acts as a personal, automated hedge-fund engine for the retail trader. Users deploy "Sentinel Nodes" that constantly monitor the Birdeye data firehose, automatically evaluating tokens against custom logic gates, and dispatching actionable alerts directly to Telegram.
 
 ### Target Audience & Utility
-- **The Speed Trader**: Instantly sniping new listings the moment they migrate from Pump.fun, with automated rug-pull checks.
-- **The Swing Trader**: Tracking massive liquidity shifts ("Whale Radar") and trending momentum over 24-hour periods.
-- **Alpha Communities**: Deploying pre-configured "Strategy Blueprints" to their private groups, ensuring the whole community trades with the same real-time edge.
+- **The Alpha Hunter**: Sniping new listings the moment they migrate from **Pump.fun**, with automated, sub-second security checks.
+- **The Whale Watcher**: Tracking massive liquidity shifts across **Solana DEXs** and identifying early smart-money accumulation.
+- **DAO & Alpha Communities**: Deploying "Strategy Blueprints" to private groups, ensuring members trade with a data-driven edge.
 
 ---
 
@@ -56,7 +59,7 @@ graph LR
 
     subgraph Data_Ingestion ["📥 INGESTION LAYER"]
         direction TB
-        A[["🌐 Birdeye V2/V3"]]
+        A[["◎ Birdeye V3 — Solana Native"]]
         B("👁️ Global Watcher")
         A -->|Polling| B
     end
@@ -147,28 +150,36 @@ The system employs a ruthless, rules-based multiplier on top of the AI base scor
 
 ---
 
-## 🌐 Macro-Analysis vs. Real-Time Execution
+## ◎ Solana-Native Architecture & Scalability
 
-### The Compute Unit (CU) Reality & Our Current "Macro" Engine
-Monitoring high-velocity chains like Solana in real-time is an expensive endeavor. With our current Free Tier API limit of **30,000 Compute Units/month**, continuous second-by-second polling is impossible. 
+### 🚀 SVM-Optimized, Enterprise-Ready
+Solana is the highest-throughput retail chain in existence — and Birdeye Catalyst was built *specifically* for its velocity. **Architected for immediate Enterprise WSS activation**, our security and ingestion modules are designed to handle Solana's unique high-frequency event model: Pump.fun migrations, Raydium LP creations, and SPL token lifecycle events.
 
-Instead of building a broken sniper bot, we engineered Catalyst V1 as a **Macro-Analysis Engine**. We operate on a deliberate 4-hour batch-processing cycle. 
-- **Batch Ingestion:** Every 4 hours, Catalyst ingests a massive payload of ecosystem data.
-- **AI/ML Scoring:** This data is processed asynchronously and evaluated for high-timeframe momentum, liquidity health, and "Smart Money" accumulation. 
-- **The Result:** We provide users with deep, actionable intelligence on market shifts, rather than noisy, second-by-second micro-fluctuations.
+We avoided the "we support all chains" trap. Instead, we went deep into Solana's DNA:
+- **Solana-Specific Enrichment:** Every token is evaluated against Solana-native metrics: LP burn status, Freeze/Mint authority revocation, and top-10 SPL holder concentration.
+- **AI/ML Scoring on Solana Data:** Our Transformer engine is trained exclusively on Solana on-chain patterns, not generic multi-chain noise.
 
-### 🚀 The "Hyper-Speed" V2 Roadmap (If We Win)
-Building on the momentum and robust architectural foundation that secured Catalyst a Top 10 finish in Sprint 2, our vision for the hackathon prize is absolute real-time dominance.
+## 💼 On-Chain Subscription Model (Not Forced Tokenomics)
 
-If Birdeye Catalyst secures **1st Place** and the accompanying **Birdeye Data Premium Plus Plan** (60M+ CUs and Enterprise WSS access), we will immediately trigger our V2 deployment:
+We deliberately avoided forced tokenomics. Birdeye Catalyst is a **real business with a clear path to profitability**, built on top of Solana's payment infrastructure.
 
-1. **Enterprise WebSocket (WSS) Integration:** We will bypass REST API polling entirely for our core modules. The Catalyst Node.js engine is already built on an event-driven architecture, ready to consume Birdeye's live WSS firehose for zero-latency data ingestion.
-2. **The $29/mo Catalyst Pro Tier:** The ultimate monetization strategy. The real-time WSS sniper capabilities, instant RugCheck triggers, and millisecond execution alerts will be strictly gated behind our **Pro Tier**. Users can seamlessly upgrade via our integrated **Sphere** payment gateways.
-3. **Free Tier Lead Magnet:** The Free Tier will remain on the highly valuable 4-hour Macro-Analysis engine, acting as the perfect lead magnet to onboard communities before upselling them to Pro.
-4. **Full Security Audits:** We will instantly enable live data for honeypot, rug pull, and mint/freeze authority checks via the `/defi/token_security` endpoint (currently mocked due to Free Tier 401 errors).
+### How It Works
+- **Payments are native to Solana:** Pro subscriptions are paid in **USDC via Solana Pay**, keeping everything on-chain, trustless, and Solana-native.
+- **No governance token. No staking.** Users pay for real utility and receive a verifiable on-chain "Pro Access" credential tied to their wallet.
 
-### 💼 The Break-Even Point
-The 1st Place prize provides a 60-day runway of the Premium Plus API. By unlocking the WSS-powered "Pro Tier" at $29/month, **we only need 17 paying customers** to self-fund the Birdeye Enterprise API permanently. Catalyst is not just a hackathon build; it is a scalable, highly viable SaaS ready for market.
+### The 17-User Break-Even Point
+Birdeye Catalyst is a **high-margin, scalable on-chain software business**.
+
+- **Self-Sustaining at 17 Users:** At just **29 USDC/month**, we only need **17 paying users** to cover the Birdeye Enterprise API cost permanently. Every user beyond that is pure margin.
+- **Institutional Tier:** The architecture supports white-labeling for Solana DAOs and alpha groups, creating B2B revenue streams at 10x the retail price point.
+- **Viral Growth Engine:** Built-in referral mechanics give users "Pro Tier" upgrades for inviting others, minimizing Customer Acquisition Cost (CAC) to near-zero.
+
+### 🛣️ The "Frontier" Roadmap (Colosseum Vision)
+Our participation in the **Colosseum Frontier Hackathon** aims to transition from a macro-analysis tool to a real-time execution powerhouse.
+
+1.  **WSS Enterprise Firehose:** Birdeye's Enterprise WebSockets to trigger AI inference the millisecond a Raydium LP is created.
+2.  **Jupiter v6 Direct Swap:** "One-Click Execution" from Telegram alerts, routing through Jupiter's best-price aggregator without leaving the chat.
+3.  **Halborn-Inspired Security Shield:** Deepening `/defi/token_security` integration for a real-time Solana "Rug Score" at the SPL token level.
 
 ---
 
@@ -203,6 +214,6 @@ The 1st Place prize provides a 60-day runway of the Premium Plus API. By unlocki
 ---
 
 ## 🤝 Developed By
-Engineered with precision by **Eren Celik** for the **Birdeye Data Build in Public Competition**.
+Engineered with precision by **Eren Celik** for the **Superteam Turkey x Colosseum Frontier Hackathon 2026**.
 
-*"Transforming the noise of DeFi into the signal of opportunity."*
+*"Turning Solana's noise into actionable Alpha."*

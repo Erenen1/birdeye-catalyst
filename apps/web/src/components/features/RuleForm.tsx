@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
 import { X, ShieldCheck, Droplets, Zap, Send, ChevronRight, HelpCircle } from 'lucide-react';
 import { TriggerType, ActionType } from '@chaintrigger/shared';
 
@@ -21,21 +20,7 @@ export default function RuleForm({ userId, onClose, onSuccess }: RuleFormProps) 
   const [noMint, setNoMint] = useState(false);
   const [noFreeze, setNoFreeze] = useState(false);
   const [top10, setTop10] = useState('50'); // Default %50 max
-  const { chain: connectedChain } = useAccount();
-  const [chain, setChain] = useState('solana');
-
-  // Map connected chain to Birdeye chain names
-  useEffect(() => {
-    if (connectedChain) {
-      const name = connectedChain.name.toLowerCase();
-      if (name.includes('solana')) setChain('solana');
-      else if (name.includes('ethereum')) setChain('ethereum');
-      else if (name.includes('base')) setChain('base');
-      else if (name.includes('arbitrum')) setChain('arbitrum');
-      else if (name.includes('polygon')) setChain('polygon');
-      else if (name.includes('optimism')) setChain('optimism');
-    }
-  }, [connectedChain]);
+  const [chain] = useState('solana'); // Solana-native: always Solana
 
   const [userTier, setUserTier] = useState('free');
   const [ruleCount, setRuleCount] = useState(0);

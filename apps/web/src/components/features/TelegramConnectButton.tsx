@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import { Send, CheckCircle2, Loader2, XCircle, AlertTriangle } from 'lucide-react';
-import { useAccount } from 'wagmi';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 interface Props {
   isConnected: boolean;
 }
 
 export function TelegramConnectButton({ isConnected }: Props) {
-  const { address } = useAccount();
+  const { publicKey } = useWallet();
+  const address = publicKey?.toBase58();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);

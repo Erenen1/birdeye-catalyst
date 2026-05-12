@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     await dbConnect();
 
     await UserModel.findOneAndUpdate(
-      { walletAddress: address.toLowerCase() },
+      { walletAddress: address },
       { 
         $unset: { 
           telegramChatId: "", 

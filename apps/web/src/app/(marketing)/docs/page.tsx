@@ -2,8 +2,8 @@ import React from 'react';
 import { Terminal, Shield, Zap, Activity, Cpu, Code2, CheckSquare } from 'lucide-react';
 
 export const metadata = {
-  title: 'Documentation | Birdeye Catalyst',
-  description: 'Technical architecture and usage guide for Birdeye Catalyst.',
+  title: 'Documentation | Catalyst Terminal',
+  description: 'Technical architecture and usage guide for Catalyst Terminal.',,
 };
 
 export default function DocsPage() {
@@ -19,7 +19,7 @@ export default function DocsPage() {
             <h1 className="text-3xl font-bold text-white tracking-tighter uppercase">Catalyst_Manifesto</h1>
           </div>
           <p className="max-w-2xl text-sm leading-relaxed">
-            Welcome to the Birdeye Catalyst technical documentation. Here you will find detailed explanations of our AI-driven architecture, automated execution nodes, and how to maximize your operational efficiency on the Solana network.
+            Welcome to the Catalyst Terminal technical documentation. Here you will find detailed explanations of our AI-driven architecture, automated execution nodes, and how to maximize your operational efficiency on the Solana network.
           </p>
         </div>
       </div>
@@ -49,7 +49,7 @@ export default function DocsPage() {
               <h2 className="text-xl font-bold text-white tracking-tighter uppercase">1. Introduction</h2>
             </div>
             <p className="text-sm leading-relaxed">
-              Birdeye Catalyst is an industrial-grade DeFi intelligence hub. It bridges the gap between raw blockchain data and actionable trading execution. By monitoring thousands of tokens in real-time, it allows operators (users) to set up automated logical nodes that trigger private Telegram notifications the millisecond a token matches their precise criteria.
+              Catalyst Terminal is an industrial-grade DeFi intelligence hub. It bridges the gap between raw blockchain data and actionable trading execution. By monitoring thousands of tokens in real-time, it allows operators (users) to set up automated logical nodes that trigger private Telegram notifications the millisecond a token matches their precise criteria.
             </p>
             <div className="bg-[#121318] border border-[#1c1d24] p-6 rounded-sm">
               <h4 className="text-white text-xs font-bold mb-2 uppercase">Core Philosophy</h4>

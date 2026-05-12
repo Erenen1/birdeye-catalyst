@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount } from 'wagmi';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { TrendingUp, TrendingDown, DollarSign, Info, BarChart2, Trash2 } from 'lucide-react';
 
 export default function PortfolioPage() {
-  const { address, isConnected } = useAccount();
+  const { publicKey, connected: isConnected } = useWallet();
+  const address = publicKey?.toBase58();
   const [trackedTokens, setTrackedTokens] = useState<any[]>([]);
   const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);

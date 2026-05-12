@@ -22,7 +22,7 @@ const QUEUE_NAME = 'notifications';
 
 
 async function bootstrap() {
-  console.log('🚀 Birdeye Catalyst Worker başlatılıyor...');
+  console.log('🚀 Catalyst Terminal Worker başlatılıyor...');
 
   const mongoUri = process.env.MONGO_URI || 'mongodb://mongodb:27017/chaintrigger';
   const redisHost = process.env.REDIS_HOST || 'redis';
