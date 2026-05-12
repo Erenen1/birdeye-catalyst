@@ -1,4 +1,4 @@
-# Birdeye Catalyst 🦅
+# Catalyst Terminal 🦅
 **The AI-Agentic Intelligence Terminal for the Solana Frontier**
 
 [![Superteam Turkey](https://img.shields.io/badge/Superteam-Turkey-FFD700?style=for-the-badge&logo=solana)](https://superteam.fun)
@@ -10,10 +10,10 @@
 [![Redis](https://img.shields.io/badge/Redis-Cache_%26_PubSub-DC382D?style=for-the-badge&logo=redis)](https://redis.io)
 [![BullMQ](https://img.shields.io/badge/BullMQ-Job_Queue-FF4949?style=for-the-badge)](#)
 
-![Birdeye Catalyst Hero](assets/hero.png)
+![Catalyst Terminal Hero](assets/hero.png)
 
 > **"Data is just noise until you find the Catalyst."**  
-> Birdeye Catalyst is an industrial-grade, AI-agentic intelligence hub built for the **Solana Frontier**. By chaining high-fidelity Birdeye V3 data with custom Transformer-based AI, it automates alpha discovery, security auditing, and strategy execution—delivering institutional-grade insights to retail traders before the crowd catches up.
+> Catalyst Terminal is an industrial-grade, AI-agentic intelligence hub built for the **Solana Frontier**. By chaining high-fidelity Birdeye V3 data with custom Transformer-based AI, it automates alpha discovery, security auditing, and strategy execution—delivering institutional-grade insights to retail traders before the crowd catches up.
 
 ---
 
@@ -23,7 +23,7 @@
 Solana is the most active retail chain in existence. With thousands of tokens launching daily via **Pump.fun** and migrating to **Raydium**, the ecosystem suffers from massive **Information Overload**. Traders are losing to MEV bots and "rug pulls" while manually monitoring Telegram groups and Solscan. Existing tools are passive; they don't *think*, they just *display*.
 
 ### The Solution: Automated, Personalized Vigilance
-Birdeye Catalyst is not just another dashboard; it is an **execution-ready intelligence network**. It acts as a personal, automated hedge-fund engine for the retail trader. Users deploy "Sentinel Nodes" that constantly monitor the Birdeye data firehose, automatically evaluating tokens against custom logic gates, and dispatching actionable alerts directly to Telegram.
+Catalyst Terminal is not just another dashboard; it is an **execution-ready intelligence network**. It acts as a personal, automated hedge-fund engine for the retail trader. Users deploy "Sentinel Nodes" that constantly monitor the Birdeye data firehose, automatically evaluating tokens against custom logic gates, and dispatching actionable alerts directly to Telegram.
 
 ### Target Audience & Utility
 - **The Alpha Hunter**: Sniping new listings the moment they migrate from **Pump.fun**, with automated, sub-second security checks.
@@ -153,7 +153,7 @@ The system employs a ruthless, rules-based multiplier on top of the AI base scor
 ## ◎ Solana-Native Architecture & Scalability
 
 ### 🚀 SVM-Optimized, Enterprise-Ready
-Solana is the highest-throughput retail chain in existence — and Birdeye Catalyst was built *specifically* for its velocity. **Architected for immediate Enterprise WSS activation**, our security and ingestion modules are designed to handle Solana's unique high-frequency event model: Pump.fun migrations, Raydium LP creations, and SPL token lifecycle events.
+Solana is the highest-throughput retail chain in existence — and Catalyst Terminal was built *specifically* for its velocity. **Architected for immediate Enterprise WSS activation**, our security and ingestion modules are designed to handle Solana's unique high-frequency event model: Pump.fun migrations, Raydium LP creations, and SPL token lifecycle events.
 
 We avoided the "we support all chains" trap. Instead, we went deep into Solana's DNA:
 - **Solana-Specific Enrichment:** Every token is evaluated against Solana-native metrics: LP burn status, Freeze/Mint authority revocation, and top-10 SPL holder concentration.
@@ -161,14 +161,14 @@ We avoided the "we support all chains" trap. Instead, we went deep into Solana's
 
 ## 💼 On-Chain Subscription Model (Not Forced Tokenomics)
 
-We deliberately avoided forced tokenomics. Birdeye Catalyst is a **real business with a clear path to profitability**, built on top of Solana's payment infrastructure.
+We deliberately avoided forced tokenomics. Catalyst Terminal is a **real business with a clear path to profitability**, built on top of Solana's payment infrastructure.
 
 ### How It Works
 - **Payments are native to Solana:** Pro subscriptions are paid in **USDC via Solana Pay**, keeping everything on-chain, trustless, and Solana-native.
 - **No governance token. No staking.** Users pay for real utility and receive a verifiable on-chain "Pro Access" credential tied to their wallet.
 
 ### The 17-User Break-Even Point
-Birdeye Catalyst is a **high-margin, scalable on-chain software business**.
+Catalyst Terminal is a **high-margin, scalable on-chain software business**.
 
 - **Self-Sustaining at 17 Users:** At just **29 USDC/month**, we only need **17 paying users** to cover the Birdeye Enterprise API cost permanently. Every user beyond that is pure margin.
 - **Institutional Tier:** The architecture supports white-labeling for Solana DAOs and alpha groups, creating B2B revenue streams at 10x the retail price point.
